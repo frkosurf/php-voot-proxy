@@ -35,13 +35,13 @@ try {
 
     // get my groups
     $request->matchRest("GET", "/groups/@me", function() use ($rs, $response, $storage, $logger) {
-        $rs->requireScope("grades");        // FIXME: should be read
+        $rs->requireScope("grades");        // FIXME: should be "read" scope I guess...or maybe something else?!
         $uid = $rs->getAttribute("uid");
-        // we need to query the uid? at the institute
+        // we always need to request the uid field...
         
         $providers = $storage->getProviders();
         foreach($providers as $p) {
-            $requestUri = $p['endpoint'] . "/groups/@me";
+            $requestUri = $p['endpoint'] . "/groups/" . $uid[0];
 
             $o = new HttpRequest($requestUri);
             $o->setHeader("Authorization", "Basic " . base64_encode($p['username'] . ":" . $p['password']));
@@ -53,7 +53,7 @@ try {
                 $logger->logDebug($r);
             }
         }
-        $response->setContent(json_encode(array("hello" => $uid)));
+        $response->setContent($r->getContent());
     });
 
     $request->matchRestDefault(function($methodMatch, $patternMatch) use ($request, $response) {

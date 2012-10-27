@@ -40,6 +40,13 @@ try {
         // we always need to request the uid field...
         
         $providers = $storage->getProviders();
+
+        $itemsPerPage = 0;
+        $totalResults = 0;
+        $startIndex = 0;
+
+        $allEntries = array();
+
         foreach($providers as $p) {
             $requestUri = $p['endpoint'] . "/groups/" . $uid[0];
 
@@ -52,8 +59,25 @@ try {
             if(NULL !== $logger) {
                 $logger->logDebug($r);
             }
+            $jr = json_decode($r->getContent(), TRUE);
+
+            $itemsPerPage += $jr['itemsPerPage'];
+            $totalResults += $jr['totalResults'];
+
+            foreach($jr['entry'] as $k => $e) {
+                $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
+                array_push($allEntries, $jr['entry'][$k]);
+            }
         }
-        $response->setContent($r->getContent());
+
+        $x = array ( 
+            "entry" => $allEntries, 
+            "itemsPerPage" => $itemsPerPage, 
+            "totalResults" => $totalResults,
+            "startIndex" => 0
+        );
+
+        $response->setContent(json_encode($x));
     });
 
     $request->matchRestDefault(function($methodMatch, $patternMatch) use ($request, $response) {

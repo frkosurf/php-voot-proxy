@@ -33,7 +33,13 @@ try {
     $response = new HttpResponse();
     $response->setHeader("Content-Type", "application/json");
 
-    // get my groups
+    $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($config, $rs, $request, $response, $storage, $logger) {
+        $rs->requireScope("read");
+
+
+    });
+
+    // get groups
     $request->matchRest("GET", "/groups/@me", function() use ($config, $rs, $request, $response, $storage, $logger) {
         $rs->requireScope("read");
 

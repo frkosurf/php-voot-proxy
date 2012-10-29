@@ -35,7 +35,7 @@ try {
 
     // get my groups
     $request->matchRest("GET", "/groups/@me", function() use ($rs, $response, $storage, $logger) {
-        $rs->requireScope("grades");        // FIXME: should be "read" scope I guess...or maybe something else?!
+        $rs->requireScope("read");
         $uid = $rs->getAttribute("uid");
         // we always need to request the uid field...
         

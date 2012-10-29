@@ -80,14 +80,14 @@ class HttpRequest
     {
         $parameters = $this->getQueryParameters();
 
-        return (array_key_exists($key, $parameters) && !empty($parameters[$key])) ? $parameters[$key] : NULL;
+        return (array_key_exists($key, $parameters) && 0 !== strlen($parameters[$key])) ? $parameters[$key] : NULL;
     }
 
     public function getPostParameter($key)
     {
         $parameters = $this->getPostParameters();
 
-        return (array_key_exists($key, $parameters) && !empty($parameters[$key])) ? $parameters[$key] : NULL;
+        return (array_key_exists($key, $parameters) && 0 !== strlen($parameters[$key])) ? $parameters[$key] : NULL;
     }
 
     public function getPostParameters()

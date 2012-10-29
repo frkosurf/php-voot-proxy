@@ -1,6 +1,14 @@
 ; default configuration
 serviceName = "VOOT Proxy"
 
+; this attribute will be used to query the external group provider for 
+; group membership information and group member lists
+groupProviderQueryAttributeName = "uid"
+
+; this attribute is used in the external group provider. If the value of the 
+; attribute with this name matches the filter value the provider is queried.
+groupProviderFilterAttributeName = "schacHomeOrganization"
+
 ; OAuth AS
 [OAuth]
 tokenInfoEndpoint = "http://localhost/php-oauth/tokeninfo.php"

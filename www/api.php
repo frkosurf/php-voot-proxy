@@ -34,21 +34,23 @@ try {
     $response->setHeader("Content-Type", "application/json");
 
     // get my groups
-    $request->matchRest("GET", "/groups/@me", function() use ($rs, $response, $storage, $logger) {
+    $request->matchRest("GET", "/groups/@me", function() use ($config, $rs, $request, $response, $storage, $logger) {
         $rs->requireScope("read");
-        $uid = $rs->getAttribute("uid");
-        // we always need to request the uid field...
-        
-        $providers = $storage->getProviders();
 
-        $itemsPerPage = 0;
-        $totalResults = 0;
-        $startIndex = 0;
+        $queryAttributeValue = $rs->getAttribute($config->getValue('groupProviderQueryAttributeName'));
+        $filterAttributeValue = $rs->getAttribute($config->getValue('groupProviderFilterAttributeName', FALSE));
 
         $allEntries = array();
 
+        $providers = $storage->getProviders();
         foreach($providers as $p) {
-            $requestUri = $p['endpoint'] . "/groups/" . $uid[0];
+            // check if the provider has a filter and ignore the provider if 
+            // it has a filter and does not match the expected value
+            if(NULL !== $filterAttributeValue && $filterAttributeValue !== $p['filter']) {
+                continue;
+            }
+
+            $requestUri = $p['endpoint'] . "/groups/" . $queryAttributeValue[0];
 
             $o = new HttpRequest($requestUri);
             $o->setHeader("Authorization", "Basic " . base64_encode($p['username'] . ":" . $p['password']));
@@ -60,21 +62,50 @@ try {
                 $logger->logDebug($r);
             }
             $jr = json_decode($r->getContent(), TRUE);
-
-            $itemsPerPage += $jr['itemsPerPage'];
-            $totalResults += $jr['totalResults'];
-
             foreach($jr['entry'] as $k => $e) {
+                // update the group identifier to make it unique among the 
+                // possibly various group providers
+
+                // FIXME: maybe only do this after the paging stuff is dealt with
                 $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
                 array_push($allEntries, $jr['entry'][$k]);
             }
         }
 
+        $totalResults = count($allEntries);
+
+        // sort by group title from allEntries, this is a bit expensive but we 
+        // don't expect people to be in 100s of groups, so should be fine
+        usort($allEntries, function($a, $b) { 
+            return strcasecmp($a['title'], $b['title']);
+        });
+
+        $startIndex = $request->getQueryParameter("startIndex");
+        if(NULL === $startIndex) {
+            $startIndex = 0;
+        }
+        if(!is_numeric($startIndex) || 0 > $startIndex) {
+            $startIndex = 0;
+        }
+        $count = $request->getQueryParameter("count");
+        if(NULL === $count) {
+            $count = $totalResults;
+        }
+        if(!is_numeric($count) || 0 > $count) {
+            $count = $totalResults;
+        }
+        
+        $slicedArray = array_slice($allEntries, $startIndex, $count);
+
+        // FIXME: should this be the request number of items, or the actual
+        // number of items returned?
+        $itemsPerPage = count($slicedArray);
+
         $x = array ( 
-            "entry" => $allEntries, 
+            "entry" => $slicedArray, 
             "itemsPerPage" => $itemsPerPage, 
             "totalResults" => $totalResults,
-            "startIndex" => 0
+            "startIndex" => $startIndex
         );
 
         $response->setContent(json_encode($x));

@@ -5,11 +5,6 @@ namespace Tuxed\VootProxy;
 use \Tuxed\Config as Config;
 use \PDO as PDO;
 
-/**
- * Class to implement storage for the OAuth Authorization Server using PDO.
- *
- * FIXME: look into throwing exceptions on error instead of returning FALSE?
- */
 class PdoVootProxyStorage
 {
     private $_c;
@@ -38,6 +33,64 @@ class PdoVootProxyStorage
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getProvider($providerId)
+    {
+        $stmt = $this->_pdo->prepare("SELECT * FROM ExternalGroupProviders WHERE id = :provider_id");
+        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        $result = $stmt->execute();
+        if (FALSE === $result) {
+            throw new StorageException("unable to retrieve provider");
+        }
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateProvider($providerId, $data)
+    {
+        $stmt = $this->_pdo->prepare("UPDATE ExternalGroupProviders SET name = :name, description = :description, endpoint = :endpoint, username = :username, password = :password, filter = :icon WHERE id = :provider_id");
+        $stmt->bindValue(":name", $data['name'], PDO::PARAM_STR);
+        $stmt->bindValue(":description", $data['description'], PDO::PARAM_STR);
+        $stmt->bindValue(":endpoint", $data['endpoint'], PDO::PARAM_STR);
+        $stmt->bindValue(":username", $data['username'], PDO::PARAM_STR);
+        $stmt->bindValue(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindValue(":filter", $data['filter'], PDO::PARAM_STR);
+        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to update provider");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
+    public function addProvider($data)
+    {
+        $stmt = $this->_pdo->prepare("INSERT INTO ExternalGroupProviders (id, name, description, endpoint, username, password, filter) VALUES(:provider_id, :name, :description, :endpoint, :username, :password, :filter)");
+        $stmt->bindValue(":provider_id", $data['id'], PDO::PARAM_STR);
+        $stmt->bindValue(":name", $data['name'], PDO::PARAM_STR);
+        $stmt->bindValue(":description", $data['description'], PDO::PARAM_STR);
+        $stmt->bindValue(":endpoint", $data['endpoint'], PDO::PARAM_STR);
+        $stmt->bindValue(":username", $data['username'], PDO::PARAM_STR);
+        $stmt->bindValue(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindValue(":filter", $data['filter'], PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to add provider");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
+    public function deleteProvider($providerId)
+    {
+        $stmt = $this->_pdo->prepare("DELETE FROM ExternalGroupProviders WHERE id = :provider_id");
+        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to delete provider");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
 
     public function initDatabase()
     {

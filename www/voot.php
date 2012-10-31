@@ -68,6 +68,9 @@ try {
                 $logger->logDebug($r);
             }
             $jr = json_decode($r->getContent(), TRUE);
+
+            // FIXME: implement validation of the response from the group provider!
+
             foreach($jr['entry'] as $k => $e) {
                 // update the group identifier to make it unique among the 
                 // possibly various group providers
@@ -80,11 +83,26 @@ try {
 
         $totalResults = count($allEntries);
 
-        // sort by group title from allEntries, this is a bit expensive but we 
-        // don't expect people to be in 100s of groups, so should be fine
-        usort($allEntries, function($a, $b) { 
-            return strcasecmp($a['title'], $b['title']);
-        });
+        // deal with sorting, only if requested
+        $sortBy = $request->getQueryParameter("sortBy");
+        if(NULL !== $sortBy) { 
+            if("title" === $sortBy) {
+                // we currently only want to support sorting by title
+                $sortOrder = $request->getQueryParameter("sortOrder");
+                if(NULL === $sortOrder && "ascending" !== $sortOrder && "descending" !== $sortOrder) {
+                    $sortOrder = "ascending";
+                }
+                usort($allEntries, function($a, $b) use ($sortBy, $sortOrder) { 
+                    if(array_key_exists($sortBy, $a) && array_key_exists($sortBy, $b)) {
+                        if("ascending" === $sortOrder) {
+                            return strcasecmp($a[$sortBy], $b[$sortBy]);
+                        } else {
+                            return strcasecmp($b[$sortBy], $a[$sortBy]);
+                        }
+                    }
+                });
+            }
+        }
 
         $startIndex = $request->getQueryParameter("startIndex");
         if(NULL === $startIndex) {
@@ -103,8 +121,105 @@ try {
         
         $slicedArray = array_slice($allEntries, $startIndex, $count);
 
-        // FIXME: should this be the request number of items, or the actual
-        // number of items returned?
+        $itemsPerPage = count($slicedArray);
+
+        $x = array ( 
+            "entry" => $slicedArray, 
+            "itemsPerPage" => $itemsPerPage, 
+            "totalResults" => $totalResults,
+            "startIndex" => $startIndex
+        );
+
+        $response->setContent(json_encode($x));
+    });
+
+    // get people
+    $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($config, $rs, $request, $response, $storage, $logger) {
+        $rs->requireScope("read");
+
+        $queryAttributeValue = $rs->getAttribute($config->getValue('groupProviderQueryAttributeName'));
+        $filterAttributeValue = $rs->getAttribute($config->getValue('groupProviderFilterAttributeName', FALSE));
+
+        $allEntries = array();
+
+        // $groupId is in format "urn:<ID>:local_group_identifier
+        // we need to extract <ID>
+        if(!is_string($groupId) || 2 > strlen($groupId)) {
+            throw new ApiException("not_found", "the group was not found");
+        }
+
+        list(, $providerId, $localGroupId ) = explode(":", $groupId);
+        
+        $p = $storage->getProvider($providerId);
+        if(FALSE === $p) {
+            throw new ApiException("not_found", "provider not found");
+        }
+        
+        $requestUri = $p['endpoint'] . "/people/" . $queryAttributeValue[0] . "/" . $localGroupId;
+
+        $o = new HttpRequest($requestUri);
+        $o->setHeader("Authorization", "Basic " . base64_encode($p['username'] . ":" . $p['password']));
+        if(NULL !== $logger) {
+            $logger->logDebug($o);
+        }
+        $r = OutgoingHttpRequest::makeRequest($o);
+        if(NULL !== $logger) {
+            $logger->logDebug($r);
+        }
+
+        // FIXME: implement validation of the response from the group provider!
+
+        $jr = json_decode($r->getContent(), TRUE);
+
+        foreach($jr['entry'] as $k => $e) {
+            // update the people identifier to make it unique among the 
+            // possibly various group providers
+
+            // FIXME: maybe only do this after the paging stuff is dealt with
+            $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
+            array_push($allEntries, $jr['entry'][$k]);
+        }
+
+        $totalResults = count($allEntries);
+
+        // deal with sorting, only if requested
+        $sortBy = $request->getQueryParameter("sortBy");
+        if(NULL !== $sortBy) { 
+            if("id" === $sortBy || "displayName" === $sortBy) {
+                // we currently only want to support sorting by id, displayName
+                $sortOrder = $request->getQueryParameter("sortOrder");
+                if(NULL === $sortOrder && "ascending" !== $sortOrder && "descending" !== $sortOrder) {
+                    $sortOrder = "ascending";
+                }
+                usort($allEntries, function($a, $b) use ($sortBy, $sortOrder) { 
+                    if(array_key_exists($sortBy, $a) && array_key_exists($sortBy, $b)) {
+                        if("ascending" === $sortOrder) {
+                            return strcasecmp($a[$sortBy], $b[$sortBy]);
+                        } else {
+                            return strcasecmp($b[$sortBy], $a[$sortBy]);
+                        }
+                    }
+                });
+            }
+        }
+
+        $startIndex = $request->getQueryParameter("startIndex");
+        if(NULL === $startIndex) {
+            $startIndex = 0;
+        }
+        if(!is_numeric($startIndex) || 0 > $startIndex) {
+            $startIndex = 0;
+        }
+        $count = $request->getQueryParameter("count");
+        if(NULL === $count) {
+            $count = $totalResults;
+        }
+        if(!is_numeric($count) || 0 > $count) {
+            $count = $totalResults;
+        }
+        
+        $slicedArray = array_slice($allEntries, $startIndex, $count);
+
         $itemsPerPage = count($slicedArray);
 
         $x = array ( 

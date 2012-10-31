@@ -21,8 +21,22 @@ your `php-oauth` installation's token endpoint.
 Don't forget to add the Apache configuration snippet that was shown as output
 of the `configure.sh` script to your Apache configuration.
 
-# VOOT / OpenSocial API support
+# Adding some Group Providers
+There is no API available yet, so for now just use your SQL tools to add group
+providers:
 
+    INSERT INTO "ExternalGroupProviders" 
+    VALUES(
+        'foo',                                  ## id
+        'Foo',                                  ## name
+        'CS Group Provider',                    ## description
+        'http://localhost/php-voot/api.php',    ## endpoint
+        'foo',                                  ## username
+        'bar',                                  ## password
+        NULL                                    ## filter
+    );
+    
+# VOOT / OpenSocial API support
 The following endpoint is available to retrieve the list of groups you are a
 member of:
 
@@ -52,5 +66,5 @@ API:
 
 An example:
 
-    /groups/@me/urn:gid:mygroup?startIndex=5&count=5&sortBy=displayName&sortOrder=descending
+    /groups/@me/urn:foo:mygroup?startIndex=5&count=5&sortBy=displayName&sortOrder=descending
 

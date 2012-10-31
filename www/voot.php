@@ -67,14 +67,34 @@ try {
             if(NULL !== $logger) {
                 $logger->logDebug($r);
             }
-            $jr = json_decode($r->getContent(), TRUE);
 
-            // FIXME: implement validation of the response from the group provider!
+            if(200 !== $r->getStatusCode()) {
+                if(NULL !== $logger) {
+                    $logger->logWarn("unexpected HTTP response code from group provider '" . $p['id'] . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
+                }
+                continue;
+            }
+
+            $jr = json_decode($r->getContent(), TRUE);
+            if(NULL === $jr) {
+                if(NULL !== $logger) {
+                    $logger->logWarn("unable to decode JSON from group provider '" . $p['id'] . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
+                }
+                continue;
+            }
+
+            if(!array_key_exists('entry', $jr)) {
+                if(NULL !== $logger) {
+                    $logger->logWarn("malformed JSON from group provider '" . $p['id'] . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
+                }
+                continue;
+            }
 
             foreach($jr['entry'] as $k => $e) {
                 // update the group identifier to make it unique among the 
                 // possibly various group providers
 
+                // FIXME: some more validation before using keys!
                 // FIXME: maybe only do this after the paging stuff is dealt with
                 $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
                 array_push($allEntries, $jr['entry'][$k]);
@@ -97,6 +117,7 @@ try {
                         if("ascending" === $sortOrder) {
                             return strcasecmp($a[$sortBy], $b[$sortBy]);
                         } else {
+                            // must be descending
                             return strcasecmp($b[$sortBy], $a[$sortBy]);
                         }
                     }

@@ -188,9 +188,27 @@ try {
             $logger->logDebug($r);
         }
 
-        // FIXME: implement validation of the response from the group provider!
+        if(200 !== $r->getStatusCode()) {
+            if(NULL !== $logger) {
+                $logger->logWarn("unexpected HTTP response code from group provider '" . $p['id'] . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
+            }
+            continue;
+        }
 
         $jr = json_decode($r->getContent(), TRUE);
+        if(NULL === $jr) {
+            if(NULL !== $logger) {
+                $logger->logWarn("unable to decode JSON from group provider '" . $p['id'] . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
+            }
+            continue;
+        }
+
+        if(!array_key_exists('entry', $jr)) {
+            if(NULL !== $logger) {
+                $logger->logWarn("malformed JSON from group provider '" . $p['id'] . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
+            }
+            continue;
+        }
 
         foreach($jr['entry'] as $k => $e) {
             // update the people identifier to make it unique among the 

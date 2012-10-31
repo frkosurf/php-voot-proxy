@@ -1,10 +1,10 @@
 [
     {
-        "description": "Demo Group Provider.",
+        "description": "Foo Group Provider.", 
         "endpoint": "http://localhost/php-voot/api.php", 
         "filter": null, 
-        "id": "demo", 
-        "name": "Demo Group Provider", 
+        "id": "foo", 
+        "name": "Foo Group Provider", 
         "password": "bar", 
         "username": "foo"
     }

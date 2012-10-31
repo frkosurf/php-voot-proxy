@@ -49,3 +49,8 @@ API:
 * `sortOrder` - the order, can be either `ascending` or `descending` 
   (default is ascending, but `sortBy` has to be set to a supported value
   as well).
+
+An example:
+
+    /groups/@me/urn:gid:mygroup?startIndex=5&count=5&sortBy=displayName&sortOrder=descending
+

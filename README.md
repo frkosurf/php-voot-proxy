@@ -22,19 +22,11 @@ Don't forget to add the Apache configuration snippet that was shown as output
 of the `configure.sh` script to your Apache configuration.
 
 # Adding some Group Providers
-There is no API available yet, so for now just use your SQL tools to add group
-providers:
+There are no API tools available yet, so for now just use the 
+`registerProviders.php` script, you may want to modify the 
+`docs/registration.json` file first:
 
-    INSERT INTO "ExternalGroupProviders" 
-    VALUES(
-        'foo',                                  ## id
-        'Foo',                                  ## name
-        'CS Group Provider',                    ## description
-        'http://localhost/php-voot/api.php',    ## endpoint
-        'foo',                                  ## username
-        'bar',                                  ## password
-        NULL                                    ## filter
-    );
+    $ php docs/registerProviders.php docs/registration.json
     
 # VOOT / OpenSocial API support
 The following endpoint is available to retrieve the list of groups you are a

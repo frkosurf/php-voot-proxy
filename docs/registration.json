@@ -1,7 +1,7 @@
 [
     {
         "description": "Foo Group Provider.", 
-        "endpoint": "http://localhost/php-voot/api.php", 
+        "endpoint": "http://localhost/php-voot-provider/voot.php", 
         "filter": null, 
         "id": "foo", 
         "name": "Foo Group Provider", 

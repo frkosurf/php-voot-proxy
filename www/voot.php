@@ -55,10 +55,13 @@ try {
         foreach($providers as $p) {
             $provider = ProviderRegistration::fromArray($p);
 
-            // check if the provider has a filter and ignore the provider if 
-            // it has a filter and does not match the expected value
-            if(NULL !== $filterAttributeValue && $filterAttributeValue !== $provider->getFilter()) {
-                continue;
+            $providerFilter = $provider->getFilter();
+            if(!empty($providerFilter)) {
+                // provider has a filter
+                if(NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
+                    // filter attribute value not available or does not match any of the values we expect 
+                    continue;
+                }
             }
 
             $requestUri = $provider->getEndpoint() . "/groups/" . $queryAttributeValue[0];
@@ -191,6 +194,15 @@ try {
 
         $provider = ProviderRegistration::fromArray($p);
         
+        $providerFilter = $provider->getFilter();
+        if(!empty($providerFilter)) {
+            // provider has a filter
+            if(NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
+                // filter attribute value not available or does not match any of the values we expect 
+                continue;
+            }
+        }
+
         $requestUri = $provider->getEndpoint() . "/people/" . $queryAttributeValue[0] . "/" . $localGroupId;
 
         $o = new HttpRequest($requestUri);

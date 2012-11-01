@@ -24,40 +24,36 @@ class PdoVootProxyStorage
             $this->_pdo->exec("PRAGMA foreign_keys = ON");
     }
 
-    public function getProviders() {
-        $stmt = $this->_pdo->prepare("SELECT * FROM ExternalGroupProviders");
+    public function getProviders()
+    {
+        $stmt = $this->_pdo->prepare("SELECT * FROM providers");
         $result = $stmt->execute();
         if (FALSE === $result) {
-            throw new StorageException("unable to retrieve external group providers");
+            throw new StorageException("unable to retrieve entries");
         }
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->_cleanupDBResult($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function getProvider($providerId)
     {
-        $stmt = $this->_pdo->prepare("SELECT * FROM ExternalGroupProviders WHERE id = :provider_id");
-        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        $stmt = $this->_pdo->prepare("SELECT * FROM providers WHERE id = :id");
+        $stmt->bindValue(":id", $providerId, PDO::PARAM_STR);
         $result = $stmt->execute();
         if (FALSE === $result) {
-            throw new StorageException("unable to retrieve provider");
+            throw new StorageException("unable to retrieve entry");
         }
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $r = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (FALSE === $r) ? FALSE : json_decode($r['data'], TRUE);
     }
 
     public function updateProvider($providerId, $data)
     {
-        $stmt = $this->_pdo->prepare("UPDATE ExternalGroupProviders SET name = :name, description = :description, endpoint = :endpoint, username = :username, password = :password, filter = :icon WHERE id = :provider_id");
-        $stmt->bindValue(":name", $data['name'], PDO::PARAM_STR);
-        $stmt->bindValue(":description", $data['description'], PDO::PARAM_STR);
-        $stmt->bindValue(":endpoint", $data['endpoint'], PDO::PARAM_STR);
-        $stmt->bindValue(":username", $data['username'], PDO::PARAM_STR);
-        $stmt->bindValue(":password", $data['password'], PDO::PARAM_STR);
-        $stmt->bindValue(":filter", $data['filter'], PDO::PARAM_STR);
-        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        $stmt = $this->_pdo->prepare("UPDATE providers SET data = :data WHERE id = :id");
+        $stmt->bindValue(":id", $providerId, PDO::PARAM_STR);
+        $stmt->bindValue(":data", json_encode($data), PDO::PARAM_STR);
         if (FALSE === $stmt->execute()) {
-            throw new StorageException("unable to update provider");
+            throw new StorageException("unable to update entry");
         }
 
         return 1 === $stmt->rowCount();
@@ -65,16 +61,11 @@ class PdoVootProxyStorage
 
     public function addProvider($data)
     {
-        $stmt = $this->_pdo->prepare("INSERT INTO ExternalGroupProviders (id, name, description, endpoint, username, password, filter) VALUES(:provider_id, :name, :description, :endpoint, :username, :password, :filter)");
-        $stmt->bindValue(":provider_id", $data['id'], PDO::PARAM_STR);
-        $stmt->bindValue(":name", $data['name'], PDO::PARAM_STR);
-        $stmt->bindValue(":description", $data['description'], PDO::PARAM_STR);
-        $stmt->bindValue(":endpoint", $data['endpoint'], PDO::PARAM_STR);
-        $stmt->bindValue(":username", $data['username'], PDO::PARAM_STR);
-        $stmt->bindValue(":password", $data['password'], PDO::PARAM_STR);
-        $stmt->bindValue(":filter", $data['filter'], PDO::PARAM_STR);
+        $stmt = $this->_pdo->prepare("INSERT INTO providers (id, data) VALUES(:id, :data)");
+        $stmt->bindValue(":id", $data['id'], PDO::PARAM_STR);
+        $stmt->bindValue(":data", json_encode($data), PDO::PARAM_STR);
         if (FALSE === $stmt->execute()) {
-            throw new StorageException("unable to add provider");
+            throw new StorageException("unable to add entry");
         }
 
         return 1 === $stmt->rowCount();
@@ -82,29 +73,106 @@ class PdoVootProxyStorage
 
     public function deleteProvider($providerId)
     {
-        $stmt = $this->_pdo->prepare("DELETE FROM ExternalGroupProviders WHERE id = :provider_id");
-        $stmt->bindValue(":provider_id", $providerId, PDO::PARAM_STR);
+        $stmt = $this->_pdo->prepare("DELETE FROM providers WHERE id = :id");
+        $stmt->bindValue(":id", $providerId, PDO::PARAM_STR);
         if (FALSE === $stmt->execute()) {
-            throw new StorageException("unable to delete provider");
+            throw new StorageException("unable to delete entry");
         }
 
         return 1 === $stmt->rowCount();
     }
 
+    public function getClients()
+    {
+        $stmt = $this->_pdo->prepare("SELECT * FROM clients");
+        $result = $stmt->execute();
+        if (FALSE === $result) {
+            throw new StorageException("unable to retrieve entries");
+        }
+
+        return $this->_cleanupDBResult($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function getClient($clientId)
+    {
+        $stmt = $this->_pdo->prepare("SELECT * FROM clients WHERE id = :id");
+        $stmt->bindValue(":id", $clientId, PDO::PARAM_STR);
+        $result = $stmt->execute();
+        if (FALSE === $result) {
+            throw new StorageException("unable to retrieve entry");
+        }
+        $r = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return (FALSE === $r) ? FALSE : json_decode($r['data'], TRUE);
+    }
+
+    public function updateClient($clientId, $data)
+    {
+        $stmt = $this->_pdo->prepare("UPDATE clients SET data = :data WHERE id = :id");
+        $stmt->bindValue(":id", $clientId, PDO::PARAM_STR);
+        $stmt->bindValue(":data", json_encode($data), PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to update entry");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
+    public function addClient($data)
+    {
+        $stmt = $this->_pdo->prepare("INSERT INTO clients (id, data) VALUES(:id, :data)");
+        $stmt->bindValue(":id", $data['id'], PDO::PARAM_STR);
+        $stmt->bindValue(":data", json_encode($data), PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to add entry");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
+    public function deleteClient($clientId)
+    {
+        $stmt = $this->_pdo->prepare("DELETE FROM clients WHERE id = :id");
+        $stmt->bindValue(":id", $clientId, PDO::PARAM_STR);
+        if (FALSE === $stmt->execute()) {
+            throw new StorageException("unable to delete entry");
+        }
+
+        return 1 === $stmt->rowCount();
+    }
+
+    /**
+     * This function extracts just the data from all the results and turns
+     * it into an array.
+     */
+    private function _cleanupDBResult($data)
+    {
+        $processedData = array();
+        foreach ($data as $v) {
+            array_push($processedData, json_decode($v['data'], TRUE));
+        }
+
+        return $processedData;
+    }
 
     public function initDatabase()
     {
+        // group providers
         $this->_pdo->exec("
-            CREATE TABLE IF NOT EXISTS `ExternalGroupProviders` (
+            CREATE TABLE IF NOT EXISTS `providers` (
             `id` VARCHAR(64) NOT NULL,
-            `name` TEXT NOT NULL,
-            `description` TEXT DEFAULT NULL,
-            `endpoint` TEXT NOT NULL,
-            `username` TEXT DEFAULT NULL,
-            `password` TEXT DEFAULT NULL,
-            `filter` TEXT DEFAULT NULL,
+            `data` TEXT NOT NULL,
             PRIMARY KEY (`id`))
         ");
-   }
+
+        // client authorizations
+        $this->_pdo->exec("
+            CREATE TABLE IF NOT EXISTS `clients` (
+            `id` VARCHAR(64) NOT NULL,
+            `data` TEXT NOT NULL,
+            PRIMARY KEY (`id`))
+        ");
+
+    }
 
 }

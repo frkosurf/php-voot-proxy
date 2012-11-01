@@ -1,11 +1,11 @@
 [
     {
-        "description": "Foo Group Provider.", 
+        "basic_pass": "bar", 
+        "basic_user": "foo", 
+        "contact_email": null, 
         "endpoint": "http://localhost/php-voot-provider/voot.php", 
-        "filter": null, 
+        "filter": [], 
         "id": "foo", 
-        "name": "Foo Group Provider", 
-        "password": "bar", 
-        "username": "foo"
+        "name": "Foo Group Provider"
     }
 ]

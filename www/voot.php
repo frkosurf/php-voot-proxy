@@ -12,8 +12,10 @@ use \Tuxed\Http\HttpRequest as HttpRequest;
 use \Tuxed\Http\HttpResponse as HttpResponse;
 use \Tuxed\Http\IncomingHttpRequest as IncomingHttpRequest;
 use \Tuxed\Http\OutgoingHttpRequest as OutgoingHttpRequest;
+use \Tuxed\Http\OutgoingHttpRequestException as OutgoingHttpRequestException;
 use \Tuxed\Logger as Logger;
 use \Tuxed\VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
+use \Tuxed\VootProxy\ProviderRegistration as ProviderRegistration;
 
 $logger = NULL;
 $request = NULL;
@@ -49,28 +51,39 @@ try {
         $allEntries = array();
 
         $providers = $storage->getProviders();
+        
         foreach($providers as $p) {
+            $provider = ProviderRegistration::fromArray($p);
+
             // check if the provider has a filter and ignore the provider if 
             // it has a filter and does not match the expected value
-            if(NULL !== $filterAttributeValue && $filterAttributeValue !== $p['filter']) {
+            if(NULL !== $filterAttributeValue && $filterAttributeValue !== $provider->getFilter()) {
                 continue;
             }
 
-            $requestUri = $p['endpoint'] . "/groups/" . $queryAttributeValue[0];
+            $requestUri = $provider->getEndpoint() . "/groups/" . $queryAttributeValue[0];
 
             $o = new HttpRequest($requestUri);
-            $o->setHeader("Authorization", "Basic " . base64_encode($p['username'] . ":" . $p['password']));
+            $o->setHeader("Authorization", "Basic " . base64_encode($provider->getBasicUser() . ":" . $provider->getBasicPass()));
             if(NULL !== $logger) {
                 $logger->logDebug($o);
             }
-            $r = OutgoingHttpRequest::makeRequest($o);
+            $r = NULL;
+            try { 
+                $r = OutgoingHttpRequest::makeRequest($o);
+            } catch (OutgoingHttpRequestException $e) {
+                if(NULL !== $logger) {
+                    $logger->logWarn("unable to retrieve data from group provider '" . $e->getMessage() . "'" . PHP_EOL . $o);
+                }
+                continue;
+            }
             if(NULL !== $logger) {
                 $logger->logDebug($r);
             }
 
             if(200 !== $r->getStatusCode()) {
                 if(NULL !== $logger) {
-                    $logger->logWarn("unexpected HTTP response code from group provider '" . $p['id'] . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
+                    $logger->logWarn("unexpected HTTP response code from group provider '" . $provider->getId() . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
                 }
                 continue;
             }
@@ -78,14 +91,14 @@ try {
             $jr = json_decode($r->getContent(), TRUE);
             if(NULL === $jr) {
                 if(NULL !== $logger) {
-                    $logger->logWarn("unable to decode JSON from group provider '" . $p['id'] . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
+                    $logger->logWarn("unable to decode JSON from group provider '" . $provider->getId() . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
                 }
                 continue;
             }
 
             if(!array_key_exists('entry', $jr)) {
                 if(NULL !== $logger) {
-                    $logger->logWarn("malformed JSON from group provider '" . $p['id'] . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
+                    $logger->logWarn("malformed JSON from group provider '" . $provider->getId() . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
                 }
                 continue;
             }
@@ -96,7 +109,7 @@ try {
 
                 // FIXME: some more validation before using keys!
                 // FIXME: maybe only do this after the paging stuff is dealt with
-                $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
+                $jr['entry'][$k]['id'] = "urn:" . $provider->getId() . ":" . $jr['entry'][$k]['id'];
                 array_push($allEntries, $jr['entry'][$k]);
             }
         }
@@ -175,22 +188,34 @@ try {
         if(FALSE === $p) {
             throw new ApiException("not_found", "provider not found");
         }
+
+        $provider = ProviderRegistration::fromArray($p);
         
-        $requestUri = $p['endpoint'] . "/people/" . $queryAttributeValue[0] . "/" . $localGroupId;
+        $requestUri = $provider->getEndpoint() . "/people/" . $queryAttributeValue[0] . "/" . $localGroupId;
 
         $o = new HttpRequest($requestUri);
-        $o->setHeader("Authorization", "Basic " . base64_encode($p['username'] . ":" . $p['password']));
+        $o->setHeader("Authorization", "Basic " . base64_encode($provider->getBasicUser() . ":" . $provider->getBasicPass()));
         if(NULL !== $logger) {
             $logger->logDebug($o);
         }
-        $r = OutgoingHttpRequest::makeRequest($o);
+
+        $r = NULL;
+        try { 
+            $r = OutgoingHttpRequest::makeRequest($o);
+        } catch (OutgoingHttpRequestException $e) {
+            if(NULL !== $logger) {
+                $logger->logWarn("unable to retrieve data from group provider '" . $e->getMessage() . "'" . PHP_EOL . $o);
+            }
+            continue;
+        }
+
         if(NULL !== $logger) {
             $logger->logDebug($r);
         }
 
         if(200 !== $r->getStatusCode()) {
             if(NULL !== $logger) {
-                $logger->logWarn("unexpected HTTP response code from group provider '" . $p['id'] . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
+                $logger->logWarn("unexpected HTTP response code from group provider '" . $provider->getId() . "', expected 200" . PHP_EOL . $o . PHP_EOL . $r);
             }
             continue;
         }
@@ -198,14 +223,14 @@ try {
         $jr = json_decode($r->getContent(), TRUE);
         if(NULL === $jr) {
             if(NULL !== $logger) {
-                $logger->logWarn("unable to decode JSON from group provider '" . $p['id'] . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
+                $logger->logWarn("unable to decode JSON from group provider '" . $provider->getId() . "', no JSON?" . PHP_EOL . $o . PHP_EOL . $r);
             }
             continue;
         }
 
         if(!array_key_exists('entry', $jr)) {
             if(NULL !== $logger) {
-                $logger->logWarn("malformed JSON from group provider '" . $p['id'] . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
+                $logger->logWarn("malformed JSON from group provider '" . $provider->getId() . "', need 'entry' key" . PHP_EOL . $o . PHP_EOL . $r);
             }
             continue;
         }
@@ -215,7 +240,7 @@ try {
             // possibly various group providers
 
             // FIXME: maybe only do this after the paging stuff is dealt with
-            $jr['entry'][$k]['id'] = "urn:" . $p['id'] . ":" . $jr['entry'][$k]['id'];
+            $jr['entry'][$k]['id'] = "urn:" . $provider->getId() . ":" . $jr['entry'][$k]['id'];
             array_push($allEntries, $jr['entry'][$k]);
         }
 

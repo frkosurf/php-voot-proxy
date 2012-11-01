@@ -6,6 +6,7 @@ $c->register();
 
 use \Tuxed\Config as Config;
 use \Tuxed\VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
+use \Tuxed\VootProxy\ProviderRegistration as ProviderRegistration;
 
 $config = new Config(dirname(__DIR__) . DIRECTORY_SEPARATOR . "config" . DIRECTORY_SEPARATOR . "proxy.ini");
 $storage = new PdoVootProxyStorage($config);
@@ -24,9 +25,10 @@ if(!file_exists($registrationFile) || !is_file($registrationFile) || !is_readabl
 $registration = json_decode(file_get_contents($registrationFile), TRUE);
 
 foreach($registration as $r) {
-    if(FALSE === $storage->getProvider($r['id'])) {
+    $pr = ProviderRegistration::fromArray($r);
+    if(FALSE === $storage->getProvider($pr->getId())) {
         // does not exist yet, install
-        echo "Adding '" . $r['name'] . "'..." . PHP_EOL;
-        $storage->addProvider($r);
+        echo "Adding '" . $pr->getName() . "'..." . PHP_EOL;
+        $storage->addProvider($pr->getProviderAsArray());
     }
 }

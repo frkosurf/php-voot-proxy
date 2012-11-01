@@ -12,6 +12,7 @@ class OutgoingHttpRequest
         curl_setopt($curlChannel, CURLOPT_URL, $request->getRequestUri()->getUri());
         curl_setopt($curlChannel, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($curlChannel, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curlChannel, CURLOPT_TIMEOUT, 10);
 
         if ($request->getRequestMethod() === "POST") {
             curl_setopt($curlChannel, CURLOPT_POST, 1);
@@ -48,6 +49,9 @@ class OutgoingHttpRequest
                 });
 
         $output = curl_exec($curlChannel);
+        if ($errorNumber = curl_errno($curlChannel)) {
+            throw new OutgoingHttpRequestException(curl_error($curlChannel));
+        }
         $httpResponse->setStatusCode(curl_getinfo($curlChannel, CURLINFO_HTTP_CODE));
         $httpResponse->setContent($output);
         curl_close($curlChannel);

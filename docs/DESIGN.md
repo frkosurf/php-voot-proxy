@@ -60,3 +60,72 @@ Limit access to a group provider per client
 
 Maybe create one HTML5 interface to do everything instead of three separate 
 ones if the entitlements are right?
+
+## Group Provider
+
+                          <add>
+    +--------------------------+
+    | Name     Actions         |
+    |                          |
+    | Foo      <edit> <delete> |
+    | Bar      <edit> <delete> |
+    +--------------------------+
+
+## Edit/Add Group Provider
+
+    +----------------------------------+
+    | *Foo*                            |
+    |                                  |
+    | ID            [ foo            ] |
+    | Name          [ Foo            ] |
+    | Endpoint      [ https://exampl ] |
+    | Basic User    [ foo            ] |
+    | Basic Pass    [ bar            ] |
+    | Contact Email [ f@example.org  ] |
+    |                                  |
+    | Allow Access To Clients          |
+    | [x] FooClient      [ ] Mekker    |
+    | [x] BarClient      [ ] Boeh      |
+    | [ ] Gaap           [x] Blup      |
+    |                                  |
+    |                   [Close] [Save] |
+    +----------------------------------+
+
+## Client
+
+The client list is retrieved from the OAuth server API.
+
+                             <add>
+    +-----------------------------+
+    | Name        Actions         |
+    |                             |
+    | FooClient   <edit> <delete> | 
+    | BarClient   <edit> <delete> |
+    +-----------------------------+
+
+## Edit Client
+
+This shows the default configuration
+
+    +----------------------------------+
+    | *FooClient*                      |
+    |                                  |
+    | Allow Access To Group Providers  |
+    | [ ] Foo           [ ] XYZ        |
+    | [ ] Bar           [ ] ABC        |
+    | [ ] FooBar        [ ] Blah       |
+    |                                  |
+    | Allowed API Calls                |
+    | [x] Groups                       |    Allow client to retrieve details of the groups the user is a member of
+    | [ ] People                       |    Allow client to retrieve member details of groups the user is a member of
+    |                                  |
+    | Attributes for People Calls      |
+    | [x] id                           |    ID is persistent user identifier (hopefully, but not the same as the SP
+    | [ ] displayName                  |    retrieves using SAML... which is a problem!
+    | [ ] emails                       |
+    | [ ] name                         |
+    |                                  |
+    |                   [Close] [Save] |
+    +----------------------------------+
+
+

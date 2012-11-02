@@ -40,8 +40,6 @@ try {
 
     $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($config, $rs, $request, $response, $storage, $logger) {
         $rs->requireScope("read");
-
-
     });
 
     // get groups

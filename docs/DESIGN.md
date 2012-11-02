@@ -44,7 +44,7 @@ Limit access to a group provider per client
         "allowPeopleList": true, 
         "attributeRelease": [
             "id", 
-            "displayName"
+            "displayName",
         ], 
         "id": "client_foo", 
         "allowedProviders": [

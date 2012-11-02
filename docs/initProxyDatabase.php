@@ -2,10 +2,10 @@
 
 require_once "lib/SplClassLoader.php";
 
-$c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
+$c1 = new SplClassLoader("RestService", "extlib/php-rest-service/lib");
 $c1->register();
 
-$c2 =  new SplClassLoader("VootProxy", "../lib");
+$c2 =  new SplClassLoader("VootProxy", "lib");
 $c2->register();
 
 use \RestService\Utils\Config as Config;

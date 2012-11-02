@@ -10,6 +10,7 @@ To install the required dependencies run:
 To set file permissions and setup the configuration file run:
 
     $ sh docs/configure.sh
+    $ sh docs/install_dependencies.sh
 
 To initialize the database run:
 

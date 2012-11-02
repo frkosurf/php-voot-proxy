@@ -4,18 +4,21 @@ require_once "../lib/ApiException.php";
 require_once "../lib/RemoteResourceServer.php";
 require_once "../lib/SplClassLoader.php";
 
-$c =  new SplClassLoader("Tuxed", dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib");
-$c->register();
+$c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
+$c1->register();
 
-use \Tuxed\Config as Config;
-use \Tuxed\Http\HttpRequest as HttpRequest;
-use \Tuxed\Http\HttpResponse as HttpResponse;
-use \Tuxed\Http\IncomingHttpRequest as IncomingHttpRequest;
-use \Tuxed\Http\OutgoingHttpRequest as OutgoingHttpRequest;
-use \Tuxed\Http\OutgoingHttpRequestException as OutgoingHttpRequestException;
-use \Tuxed\Logger as Logger;
-use \Tuxed\VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
-use \Tuxed\VootProxy\ProviderRegistration as ProviderRegistration;
+$c2 =  new SplClassLoader("VootProxy", "../lib");
+$c2->register();
+
+use \RestService\Utils\Config as Config;
+use \RestService\Http\HttpRequest as HttpRequest;
+use \RestService\Http\HttpResponse as HttpResponse;
+use \RestService\Http\IncomingHttpRequest as IncomingHttpRequest;
+use \RestService\Http\OutgoingHttpRequest as OutgoingHttpRequest;
+use \RestService\Http\OutgoingHttpRequestException as OutgoingHttpRequestException;
+use \RestService\Utils\Logger as Logger;
+use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
+use \VootProxy\ProviderRegistration as ProviderRegistration;
 
 $logger = NULL;
 $request = NULL;

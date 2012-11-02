@@ -1,6 +1,6 @@
 <?php
 
-namespace Tuxed\VootProxy;
+namespace VootProxy;
 
 class ProviderRegistration
 {
@@ -96,8 +96,8 @@ class ProviderRegistration
         if (1 !== $result) {
             throw new ProviderRegistrationException("basic_user contains invalid character");
         }
-        if(FALSE !== strpos(":", $s)) {
-            throw new ProviderRegistrationException("basic_user contains invalid character");           
+        if (FALSE !== strpos(":", $s)) {
+            throw new ProviderRegistrationException("basic_user contains invalid character");
         }
         $this->_provider['basic_user'] = empty($s) ? NULL : $s;
     }
@@ -113,8 +113,8 @@ class ProviderRegistration
         if (1 !== $result) {
             throw new ProviderRegistrationException("basic_pass contains invalid character");
         }
-        if(FALSE !== strpos(":", $s)) {
-            throw new ProviderRegistrationException("basic_pass contains invalid character");           
+        if (FALSE !== strpos(":", $s)) {
+            throw new ProviderRegistrationException("basic_pass contains invalid character");
         }
         $this->_provider['basic_pass'] = empty($s) ? NULL : $s;
     }
@@ -124,15 +124,17 @@ class ProviderRegistration
         return $this->_provider['basic_pass'];
     }
 
-    public function setFilter($f) {
+    public function setFilter($f)
+    {
         // contains an array of attribute values to match against
-        if(NULL !== $f && !is_array($f)) {
+        if (NULL !== $f && !is_array($f)) {
             throw new ProviderRegistrationException("filter should be array");
         }
         $this->_provider['filter'] = $f;
     }
 
-    public function getFilter() {
+    public function getFilter()
+    {
         return $this->_provider['filter'];
     }
 

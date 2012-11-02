@@ -1,12 +1,19 @@
 <?php
 
 require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "SplClassLoader.php";
+
+$c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
+$c1->register();
+
+$c2 =  new SplClassLoader("VootProxy", "../lib");
+$c2->register();
+
 $c =  new SplClassLoader("Tuxed", dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib");
 $c->register();
 
-use \Tuxed\Config as Config;
-use \Tuxed\VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
-use \Tuxed\VootProxy\ProviderRegistration as ProviderRegistration;
+use \RestService\Utils\Config as Config;
+use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
+use \VootProxy\ProviderRegistration as ProviderRegistration;
 
 $config = new Config(dirname(__DIR__) . DIRECTORY_SEPARATOR . "config" . DIRECTORY_SEPARATOR . "proxy.ini");
 $storage = new PdoVootProxyStorage($config);

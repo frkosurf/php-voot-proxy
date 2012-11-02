@@ -1,8 +1,8 @@
 <?php
 
-namespace Tuxed\VootProxy;
+namespace VootProxy;
 
-use \Tuxed\Config as Config;
+use \RestService\Utils\Config as Config;
 use \PDO as PDO;
 
 class PdoVootProxyStorage
@@ -44,6 +44,7 @@ class PdoVootProxyStorage
             throw new StorageException("unable to retrieve entry");
         }
         $r = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return (FALSE === $r) ? FALSE : json_decode($r['data'], TRUE);
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tuxed\VootProxy;
+namespace VootProxy;
 
 class ProviderRegistrationException extends \Exception
 {

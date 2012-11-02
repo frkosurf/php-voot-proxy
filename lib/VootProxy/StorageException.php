@@ -1,6 +1,6 @@
 <?php
 
-namespace Tuxed\VootProxy;
+namespace VootProxy;
 
 /**
  * When something went wrong with storing or retrieving

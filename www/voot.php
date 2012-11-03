@@ -1,14 +1,16 @@
 <?php
 
-require_once "../lib/ApiException.php";
-require_once "../lib/RemoteResourceServer.php";
 require_once "../lib/SplClassLoader.php";
+require_once "../lib/ApiException.php";
 
 $c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
 $c1->register();
 
-$c2 =  new SplClassLoader("VootProxy", "../lib");
+$c2 = new SplClassLoader("OAuth", "../extlib/php-lib-remote-rs/lib");
 $c2->register();
+
+$c3 = new SplClassLoader("VootProxy", "../lib");
+$c3->register();
 
 use \RestService\Utils\Config as Config;
 use \RestService\Http\HttpRequest as HttpRequest;
@@ -19,6 +21,7 @@ use \RestService\Http\OutgoingHttpRequestException as OutgoingHttpRequestExcepti
 use \RestService\Utils\Logger as Logger;
 use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
 use \VootProxy\ProviderRegistration as ProviderRegistration;
+use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
 $logger = NULL;
 $request = NULL;

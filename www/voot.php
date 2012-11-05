@@ -25,12 +25,50 @@ try {
     $logger = new Logger($config->getSectionValue('Log', 'logLevel'), $config->getValue('serviceName'), $config->getSectionValue('Log', 'logFile'), $config->getSectionValue('Log', 'logMail', FALSE));
 
     $service = new Proxy($config, $logger);
+
     $request = HttpRequest::fromIncomingHttpRequest(new IncomingHttpRequest());
-    $response = $service->handleRequest($request);
+    $request->matchRest("GET", "/groups/@me", function() use ($request, &$response, $service) {
+        $response = $service->getGroups($request);
+    });
+    $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($request, &$response, $service) {
+        $response = $service->getPeople($request, $groupId);
+    });
+    $request->matchRestDefault(function($methodMatch, $patternMatch) use ($request) {
+        if (in_array($request->getRequestMethod(), $methodMatch)) {
+            if (!$patternMatch) {
+                throw new ProxyException("not_found", "resource not found");
+            }
+        } else {
+            throw new ProxyException("method_not_allowed", "request method not allowed");
+        }
+    });
+
+} catch (ProxyException $e) {
+    $response = new HttpResponse($e->getResponseCode());
+    $response->setHeader("Content-Type", "application/json");
+    $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getMessage())));
+    if (NULL !== $logger) {
+        $logger->logFatal($e->getLogMessage(TRUE) . PHP_EOL . $request . PHP_EOL . $response);
+    }
+} catch (RemoteProviderException $e) {
+    $response = new HttpResponse($e->getResponseCode());
+    $response->setHeader("Content-Type", "application/json");
+    $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getMessage())));
+    if (NULL !== $logger) {
+        $logger->logFatal($e->getLogMessage(TRUE) . PHP_EOL . $request . PHP_EOL . $response);
+    }
+} catch (RemoteResourceServerException $e) {
+    $response = new HttpResponse($e->getResponseCode());
+    $response->setHeader("WWW-Authenticate", $e->getAuthenticateHeader());
+    $response->setHeader("Content-Type", "application/json");
+    $response->setContent($e->getContent());
+    if (NULL !== $logger) {
+        $logger->logFatal($e->getMessage() . PHP_EOL . $e->getDescription() . PHP_EOL . $request . PHP_EOL . $response);
+    }
 } catch (Exception $e) {
     $response = new HttpResponse(500);
     $response->setHeader("Content-Type", "application/json");
-    $response->setContent(json_encode(array("error" => $e->getMessage())));
+    $response->setContent(json_encode(array("error" => "internal_server_error", "error_description" => $e->getMessage())));
     if (NULL !== $logger) {
         $logger->logFatal($e->getMessage() . PHP_EOL . $request . PHP_EOL . $response);
     }

@@ -8,12 +8,14 @@ use \OAuth\RemoteResourceServer as RemoteResourceServer;
 class RemoteProvider
 {
     private $_config;
+    private $_logger;
     private $_provider;
     private $_remoteResourceServer;
 
-    public function __construct(Config $c, Provider $p, RemoteResourceServer $r)
+    public function __construct(Config $c, Logger $l, Provider $p, RemoteResourceServer $r)
     {
         $this->_config = $c;
+        $this->_logger = $l;
         $this->_provider = $p;
         $this->_remoteResourceServer = $r;
     }
@@ -49,11 +51,9 @@ class RemoteProvider
 
         $request = new HttpRequest($requestUri);
         $request->setHeader("Authorization", "Basic " . base64_encode($this->_provider->getBasicUser() . ":" . $this->_provider->getBasicPass()));
-
-        // FIXME: implement logging
-        //if (NULL !== $this->_logger) {
-        //    $this->_logger->logDebug($request);
-        //}
+        if (NULL !== $this->_logger) {
+            $this->_logger->logDebug($request);
+        }
 
         $response = NULL;
         try {
@@ -61,11 +61,9 @@ class RemoteProvider
         } catch (OutgoingHttpRequestException $e) {
             throw new RemoteProviderException("provider_error", $e->getMessage(), $this->_provider, $request, $response);
         }
-
-        // FIXME: logging
-        //if (NULL !== $this->_logger) {
-        //    $this->_logger->logDebug($response);
-        //}
+        if (NULL !== $this->_logger) {
+            $this->_logger->logDebug($response);
+        }
 
         // validate HTTP response code
         if (200 !== $response->getStatusCode()) {

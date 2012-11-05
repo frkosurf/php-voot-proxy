@@ -6,8 +6,6 @@ use \RestService\Utils\Config as Config;
 use \RestService\Utils\Logger as Logger;
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\HttpResponse as HttpResponse;
-use \RestService\Http\OutgoingHttpRequest as OutgoingHttpRequest;
-use \RestService\Http\OutgoingHttpRequestException as OutgoingHttpRequestException;
 
 use \OAuth\RemoteResourceServer as RemoteResourceServer;
 use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
@@ -67,89 +65,6 @@ class Proxy
         return array_slice($entries, $startIndex, $count);
     }
 
-    public function remoteGroupsVootCall(Provider $provider)
-    {
-        $providerUserIdentifier = $this->_rs->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-        $requestUri = $provider->getEndpoint() . "/groups/" . $providerUserIdentifier[0];
-
-        return $this->remoteVootCall($provider, $requestUri);
-    }
-
-    public function remotePeopleVootCall(Provider $provider, $providerGroupId)
-    {
-        $providerUserIdentifier = $this->_rs->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-        $requestUri = $provider->getEndpoint() . "/people/" . $providerUserIdentifier[0] . "/" . $providerGroupId;
-
-        return $this->remoteVootCall($provider, $requestUri);
-    }
-
-    public function remoteVootCall(Provider $provider, $requestUri)
-    {
-        // check to see if authenticated user is allowed to use this provider
-        $providerFilter = $provider->getFilter();
-        if (!empty($providerFilter)) {
-            $filterAttributeName = $config->getValue('groupProviderFilterAttributeName', FALSE);
-            if (NULL === $filterAttributeName) {
-                return FALSE;
-            }
-            $filterAttributeValue = $this->_rs->getAttribute($filterAttributeName);
-            if (NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
-                return FALSE;
-            }
-        }
-
-        $request = new HttpRequest($requestUri);
-        $request->setHeader("Authorization", "Basic " . base64_encode($provider->getBasicUser() . ":" . $provider->getBasicPass()));
-        if (NULL !== $this->_logger) {
-            $this->_logger->logDebug($request);
-        }
-
-        $response = NULL;
-        try {
-            $response = OutgoingHttpRequest::makeRequest($request);
-        } catch (OutgoingHttpRequestException $e) {
-            if (NULL !== $this->_logger) {
-                $this->_logger->logWarn("unable to retrieve data from provider '" . $e->getMessage() . "'" . PHP_EOL . $request);
-            }
-
-            return FALSE;
-        }
-        if (NULL !== $this->_logger) {
-            $this->_logger->logDebug($response);
-        }
-
-        // validate HTTP response code
-        if (200 !== $response->getStatusCode()) {
-            if (NULL !== $this>_logger) {
-                $this->_logger->logWarn("expected HTTP 200 response code, got " . $response->getStatusCode() . " from provider " . $provider->getId() . PHP_EOL . $request . PHP_EOL . $response);
-            }
-
-            return FALSE;
-        }
-
-        // validate we got JSON back
-        $jsonResponse = json_decode($response->getContent(), TRUE);
-        if (NULL === $jsonResponse) {
-            if (NULL !== $this->_logger) {
-                $this->_logger->logWarn("unable to decode JSON from provider " . $provider->getId() . PHP_EOL . $request . PHP_EOL . $response);
-            }
-
-            return FALSE;
-        }
-
-        // validate JSON structure
-        if (!array_key_exists('entry', $jsonResponse)) {
-            if (NULL !== $this->_logger) {
-                $this->_logger->logWarn("unsupported JSON structure from provider " . $provider->getId() . PHP_EOL . $request . PHP_EOL . $response);
-            }
-
-            return FALSE;
-        }
-
-        // FIXME: check if startIndex, itemsPerPage, etc. are correct
-        return $jsonResponse['entry'];
-    }
-
     public function addGroupsScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
@@ -195,13 +110,10 @@ class Proxy
             $storage = $this->_storage; // FIXME: can this be avoided? stupid PHP 5.3!
             $rs = $this->_rs; // FIXME: can this be avoided? stupid PHP 5.3!
             $x = &$this;
+            $config = $this->_config;
+            $logger = $this->_logger;
 
-#            $sortBy = $request->getQueryParameter("sortBy");
-#            $sortOrder = $request->getQueryParameter("sortOrder");
-#            $startIndex = $request->getQueryParameter("startIndex");
-#            $count = $request->getQueryParameter("count");
-
-            $request->matchRest("GET", "/groups/@me", function() use ($x, $rs, $request, $response, $storage) {
+            $request->matchRest("GET", "/groups/@me", function() use ($x, $rs, $config, $logger, $request, $response, $storage) {
                 $rs->requireScope("read");
 
                 $sortBy = $request->getQueryParameter("sortBy");
@@ -214,11 +126,13 @@ class Proxy
                 $providers = $storage->getProviders();
                 foreach ($providers as $p) {
                     $provider = Provider::fromArray($p);
-                    $jsonEntries = $x->remoteGroupsVootCall($provider);
-                    if (FALSE === $jsonEntries) {
+                    try {
+                        $remoteProvider = new RemoteProvider($config, $logger, $provider, $rs);
+                        $allEntries += $remoteProvider->getGroups("UID");
+                    } catch (RemoteProviderException $e) {
+                        // ignore provider errors, just try next provider
                         continue;
                     }
-                    $allEntries += $jsonEntries;
                 }
 
                 $totalResults = count($allEntries);
@@ -236,7 +150,7 @@ class Proxy
                 $response->setContent(json_encode($responseData));
             });
 
-            $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($x, $rs, $request, $response, $storage) {
+            $request->matchRest("GET", "/people/@me/:groupId", function($groupId) use ($x, $rs, $config, $logger, $request, $response, $storage) {
                 $rs->requireScope("read");
 
                 $sortBy = $request->getQueryParameter("sortBy");
@@ -257,10 +171,14 @@ class Proxy
                     throw new ProxyException("not_found", "provider does not exist");
                 }
                 $provider = Provider::fromArray($providerArray);
-                $entries = $x->remotePeopleVootCall($provider, $providerGroupId);
-                if (FALSE === $entries) {
-                    // FIXME: make remotePeopleVootCall etc. throw exceptions
-                    throw new ProxyException("", "");
+
+                $entries = NULL;
+                try {
+                    $remoteProvider = new RemoteProvider($config, $logger, $provider, $rs);
+                    $entries = $remoteProvider->getPeople($providerUserId, $providerGroupId);
+                } catch (RemoteProviderException $e) {
+                    // FIXME: should we just let this go?!
+                    $entries = array();
                 }
                 $totalResults = count($entries);
 

@@ -3,6 +3,10 @@
 namespace VootProxy;
 
 use \RestService\Utils\Config as Config;
+use \RestService\Utils\Logger as Logger;
+use \RestService\Http\HttpRequest as HttpRequest;
+use \RestService\Http\OutgoingHttpRequest as OutgoingHttpRequest;
+
 use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
 class RemoteProvider
@@ -22,16 +26,16 @@ class RemoteProvider
 
     public function getGroups($providerUserId)
     {
-        $requestUri = $provider->getEndpoint() . "/groups/" . $providerUserId;
+        $requestUri = $this->_provider->getEndpoint() . "/groups/" . $providerUserId;
 
         return $this->_makeVootRequest($requestUri);
     }
 
     public function getPeople($providerUserId, $providerGroupId)
     {
-        $requestUri = $provider->getEndpoint() . "/people/" . $providerUserIdentifier . "/" . $providerGroupId;
+        $requestUri = $this->_provider->getEndpoint() . "/people/" . $providerUserId . "/" . $providerGroupId;
 
-        return $this->_makeVootRequest($provider, $requestUri);
+        return $this->_makeVootRequest($requestUri);
     }
 
     private function _makeVootRequest($requestUri)

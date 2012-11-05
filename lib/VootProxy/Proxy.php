@@ -123,12 +123,14 @@ class Proxy
 
                 $allEntries = array();
 
+                $providerUserId = $rs->getAttribute($config->getValue('groupProviderQueryAttributeName'));
+
                 $providers = $storage->getProviders();
                 foreach ($providers as $p) {
                     $provider = Provider::fromArray($p);
                     try {
                         $remoteProvider = new RemoteProvider($config, $logger, $provider, $rs);
-                        $allEntries += $remoteProvider->getGroups("UID");
+                        $allEntries += $remoteProvider->getGroups($providerUserId[0]);
                     } catch (RemoteProviderException $e) {
                         // ignore provider errors, just try next provider
                         continue;
@@ -172,10 +174,12 @@ class Proxy
                 }
                 $provider = Provider::fromArray($providerArray);
 
+                $providerUserId = $rs->getAttribute($config->getValue('groupProviderQueryAttributeName'));
+
                 $entries = NULL;
                 try {
                     $remoteProvider = new RemoteProvider($config, $logger, $provider, $rs);
-                    $entries = $remoteProvider->getPeople($providerUserId, $providerGroupId);
+                    $entries = $remoteProvider->getPeople($providerUserId[0], $providerGroupId);
                 } catch (RemoteProviderException $e) {
                     // FIXME: should we just let this go?!
                     $entries = array();
@@ -207,7 +211,7 @@ class Proxy
 
         } catch (RemoteResourceServerException $e) {
             $response->setStatusCode($e->getResponseCode());
-            $response->addHeader("WWW-Authenticate", $e->getAuthenticateHeader());
+            $response->setHeader("WWW-Authenticate", $e->getAuthenticateHeader());
             $response->setContent($e->getContent());
             // FIXME: add logging here?
         } catch (ProxyException $e) {

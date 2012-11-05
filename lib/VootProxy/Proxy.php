@@ -293,7 +293,7 @@ class Proxy
             $response->setContent($e->getContent());
             // FIXME: add logging here?
         } catch (ProxyException $e) {
-
+            // FIXME: add handling here
         }
 
         return $response;

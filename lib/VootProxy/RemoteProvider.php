@@ -11,7 +11,7 @@ class RemoteProvider
     private $_provider;
     private $_remoteResourceServer;
 
-    public function __construct(Config $c, ProviderRegistration $p, RemoteResourceServer $r)
+    public function __construct(Config $c, Provider $p, RemoteResourceServer $r)
     {
         $this->_config = $c;
         $this->_provider = $p;

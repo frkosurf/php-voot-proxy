@@ -2,7 +2,7 @@
 
 namespace VootProxy;
 
-class ProviderRegistration
+class Provider
 {
     // VSCHAR     = %x20-7E
     public $regExpVSCHAR = '/^(?:[\x20-\x7E])*$/';
@@ -26,7 +26,7 @@ class ProviderRegistration
         $requiredFields = array ("id", "name", "endpoint");
         foreach ($requiredFields as $r) {
             if (!array_key_exists($r, $a)) {
-                throw new ProviderRegistrationException("not a valid provider, '" . $r . "' not set");
+                throw new ProviderException("not a valid provider, '" . $r . "' not set");
             }
         }
         $c = new static($a['id'], $a['name'], $a['endpoint']);
@@ -50,7 +50,7 @@ class ProviderRegistration
     public function setId($i)
     {
         if (empty($i)) {
-            throw new ProviderRegistrationException("id cannot be empty");
+            throw new ProviderException("id cannot be empty");
         }
         $this->_provider['id'] = $i;
     }
@@ -63,7 +63,7 @@ class ProviderRegistration
     public function setName($n)
     {
         if (empty($n)) {
-            throw new ProviderRegistrationException("name cannot be empty");
+            throw new ProviderException("name cannot be empty");
         }
         $this->_provider['name'] = $n;
     }
@@ -76,11 +76,11 @@ class ProviderRegistration
     public function setEndpoint($r)
     {
         if (FALSE === filter_var($r, FILTER_VALIDATE_URL)) {
-            throw new ProviderRegistrationException("endpoint should be valid URL");
+            throw new ProviderException("endpoint should be valid URL");
         }
         // not allowed to have a fragment (#) in it
         if (NULL !== parse_url($r, PHP_URL_FRAGMENT)) {
-            throw new ProviderRegistrationException("endpoint cannot contain a fragment");
+            throw new ProviderException("endpoint cannot contain a fragment");
         }
         $this->_provider['endpoint'] = $r;
     }
@@ -94,10 +94,10 @@ class ProviderRegistration
     {
         $result = preg_match($this->regExpVSCHAR, $s);
         if (1 !== $result) {
-            throw new ProviderRegistrationException("basic_user contains invalid character");
+            throw new ProviderException("basic_user contains invalid character");
         }
         if (FALSE !== strpos(":", $s)) {
-            throw new ProviderRegistrationException("basic_user contains invalid character");
+            throw new ProviderException("basic_user contains invalid character");
         }
         $this->_provider['basic_user'] = empty($s) ? NULL : $s;
     }
@@ -111,10 +111,10 @@ class ProviderRegistration
     {
         $result = preg_match($this->regExpVSCHAR, $s);
         if (1 !== $result) {
-            throw new ProviderRegistrationException("basic_pass contains invalid character");
+            throw new ProviderException("basic_pass contains invalid character");
         }
         if (FALSE !== strpos(":", $s)) {
-            throw new ProviderRegistrationException("basic_pass contains invalid character");
+            throw new ProviderException("basic_pass contains invalid character");
         }
         $this->_provider['basic_pass'] = empty($s) ? NULL : $s;
     }
@@ -128,7 +128,7 @@ class ProviderRegistration
     {
         // contains an array of attribute values to match against
         if (NULL !== $f && !is_array($f)) {
-            throw new ProviderRegistrationException("filter should be array");
+            throw new ProviderException("filter should be array");
         }
         $this->_provider['filter'] = $f;
     }
@@ -142,7 +142,7 @@ class ProviderRegistration
     {
         if (!empty($c)) {
             if (FALSE === filter_var($c, FILTER_VALIDATE_EMAIL)) {
-                throw new ProviderRegistrationException("contact email should be either empty or valid email address");
+                throw new ProviderException("contact email should be either empty or valid email address");
             }
         }
         $this->_provider['contact_email'] = empty($c) ? NULL : $c;

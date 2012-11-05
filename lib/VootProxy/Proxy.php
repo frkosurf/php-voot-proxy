@@ -67,7 +67,7 @@ class Proxy
         return array_slice($entries, $startIndex, $count);
     }
 
-    public function remoteGroupsVootCall(ProviderRegistration $provider)
+    public function remoteGroupsVootCall(Provider $provider)
     {
         $providerUserIdentifier = $this->_rs->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
         $requestUri = $provider->getEndpoint() . "/groups/" . $providerUserIdentifier[0];
@@ -75,7 +75,7 @@ class Proxy
         return $this->remoteVootCall($provider, $requestUri);
     }
 
-    public function remotePeopleVootCall(ProviderRegistration $provider, $providerGroupId)
+    public function remotePeopleVootCall(Provider $provider, $providerGroupId)
     {
         $providerUserIdentifier = $this->_rs->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
         $requestUri = $provider->getEndpoint() . "/people/" . $providerUserIdentifier[0] . "/" . $providerGroupId;
@@ -83,7 +83,7 @@ class Proxy
         return $this->remoteVootCall($provider, $requestUri);
     }
 
-    public function remoteVootCall(ProviderRegistration $provider, $requestUri)
+    public function remoteVootCall(Provider $provider, $requestUri)
     {
         // check to see if authenticated user is allowed to use this provider
         $providerFilter = $provider->getFilter();
@@ -150,7 +150,7 @@ class Proxy
         return $jsonResponse['entry'];
     }
 
-    public function addGroupsScope(ProviderRegistration $provider, array $entries)
+    public function addGroupsScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
             $entries[$k]['id'] = "urn:groups:" . $provider->getId() . ":" . $entries[$k]['id'];
@@ -159,7 +159,7 @@ class Proxy
         return $entries;
     }
 
-    public function addPeopleScope(ProviderRegistration $provider, array $entries)
+    public function addPeopleScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
             $entries[$k]['id'] = "urn:people:" . $provider->getId() . ":" . $entries[$k]['id'];
@@ -213,7 +213,7 @@ class Proxy
 
                 $providers = $storage->getProviders();
                 foreach ($providers as $p) {
-                    $provider = ProviderRegistration::fromArray($p);
+                    $provider = Provider::fromArray($p);
                     $jsonEntries = $x->remoteGroupsVootCall($provider);
                     if (FALSE === $jsonEntries) {
                         continue;
@@ -256,7 +256,7 @@ class Proxy
                 if (FALSE === $providerArray) {
                     throw new ProxyException("not_found", "provider does not exist");
                 }
-                $provider = ProviderRegistration::fromArray($providerArray);
+                $provider = Provider::fromArray($providerArray);
                 $entries = $x->remotePeopleVootCall($provider, $providerGroupId);
                 if (FALSE === $entries) {
                     // FIXME: make remotePeopleVootCall etc. throw exceptions

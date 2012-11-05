@@ -9,7 +9,7 @@ class RemoteProviderException extends \Exception
     private $_request;
     private $_response;
 
-    public function __construct($message, $description, ProviderRegistration $provider = NULL, HttpRequest $request = NULL, HttpResponse $response = NULL, $code = 0, Exception $previous = null)
+    public function __construct($message, $description, Provider $provider = NULL, HttpRequest $request = NULL, HttpResponse $response = NULL, $code = 0, Exception $previous = null)
     {
         $this->_description = $description;
         parent::__construct($message, $code, $previous);

@@ -13,7 +13,7 @@ $c->register();
 
 use \RestService\Utils\Config as Config;
 use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;
-use \VootProxy\ProviderRegistration as ProviderRegistration;
+use \VootProxy\Provider as Provider;
 
 $config = new Config(dirname(__DIR__) . DIRECTORY_SEPARATOR . "config" . DIRECTORY_SEPARATOR . "proxy.ini");
 $storage = new PdoVootProxyStorage($config);
@@ -32,7 +32,7 @@ if(!file_exists($registrationFile) || !is_file($registrationFile) || !is_readabl
 $registration = json_decode(file_get_contents($registrationFile), TRUE);
 
 foreach($registration as $r) {
-    $pr = ProviderRegistration::fromArray($r);
+    $pr = Provider::fromArray($r);
     if(FALSE === $storage->getProvider($pr->getId())) {
         // does not exist yet, install
         echo "Adding '" . $pr->getName() . "'..." . PHP_EOL;

@@ -1,6 +1,8 @@
 <?php
 
-class ApiException extends \Exception
+namespace VootProxy;
+
+class ProxyException extends \Exception
 {
     private $_description;
 

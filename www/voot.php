@@ -15,6 +15,7 @@ use \RestService\Http\HttpResponse as HttpResponse;
 use \RestService\Http\IncomingHttpRequest as IncomingHttpRequest;
 use \RestService\Utils\Logger as Logger;
 use \VootProxy\Proxy as Proxy;
+use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
 
 $logger = NULL;
 $request = NULL;

@@ -7,54 +7,35 @@ use \RestService\Utils\Logger as Logger;
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\OutgoingHttpRequest as OutgoingHttpRequest;
 
-use \OAuth\RemoteResourceServer as RemoteResourceServer;
-
 class RemoteProvider
 {
     private $_config;
     private $_logger;
-    private $_provider;
-    private $_remoteResourceServer;
 
-    public function __construct(Config $c, Logger $l, Provider $p, RemoteResourceServer $r)
+    public function __construct(Config $c, Logger $l)
     {
         $this->_config = $c;
         $this->_logger = $l;
-        $this->_provider = $p;
-        $this->_remoteResourceServer = $r;
     }
 
-    public function getGroups($providerUserId)
+    public function getGroups(Provider $p, $providerUserId)
     {
-        $requestUri = $this->_provider->getEndpoint() . "/groups/" . $providerUserId;
+        $requestUri = $p->getEndpoint() . "/groups/" . $providerUserId;
 
-        return $this->_makeVootRequest($requestUri);
+        return $this->_makeVootRequest($p, $requestUri);
     }
 
-    public function getPeople($providerUserId, $providerGroupId)
+    public function getPeople(Provider $p, $providerUserId, $providerGroupId)
     {
-        $requestUri = $this->_provider->getEndpoint() . "/people/" . $providerUserId . "/" . $providerGroupId;
+        $requestUri = $p->getEndpoint() . "/people/" . $providerUserId . "/" . $providerGroupId;
 
-        return $this->_makeVootRequest($requestUri);
+        return $this->_makeVootRequest($p, $requestUri);
     }
 
-    private function _makeVootRequest($requestUri)
+    private function _makeVootRequest(Provider $p, $requestUri)
     {
-        // check to see if authenticated user is allowed to use this provider
-        $providerFilter = $this->_provider->getFilter();
-        if (!empty($providerFilter)) {
-            $filterAttributeName = $this->_config->getValue('groupProviderFilterAttributeName', FALSE);
-            if (NULL === $filterAttributeName) {
-                return FALSE;
-            }
-            $filterAttributeValue = $this->_remoteResourceServer->getAttribute($filterAttributeName);
-            if (NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
-                return FALSE;
-            }
-        }
-
         $request = new HttpRequest($requestUri);
-        $request->setHeader("Authorization", "Basic " . base64_encode($this->_provider->getBasicUser() . ":" . $this->_provider->getBasicPass()));
+        $request->setHeader("Authorization", "Basic " . base64_encode($p->getBasicUser() . ":" . $p->getBasicPass()));
         if (NULL !== $this->_logger) {
             $this->_logger->logDebug($request);
         }
@@ -63,7 +44,7 @@ class RemoteProvider
         try {
             $response = OutgoingHttpRequest::makeRequest($request);
         } catch (OutgoingHttpRequestException $e) {
-            throw new RemoteProviderException("provider_error", $e->getMessage(), $this->_provider, $request, $response);
+            throw new RemoteProviderException("provider_error", $e->getMessage(), $p, $request, $response);
         }
         if (NULL !== $this->_logger) {
             $this->_logger->logDebug($response);
@@ -71,28 +52,28 @@ class RemoteProvider
 
         // validate HTTP response code
         if (200 !== $response->getStatusCode()) {
-            throw new RemoteProviderException("provider_error", "unexpected response code", $this->_provider, $request, $response);
+            throw new RemoteProviderException("provider_error", "unexpected response code", $p, $request, $response);
         }
 
         // validate we got JSON back
         $jsonResponse = json_decode($response->getContent(), TRUE);
         if (NULL === $jsonResponse) {
-            throw new RemoteProviderException("provider_error", "no JSON response", $this->_provider, $request, $response);
+            throw new RemoteProviderException("provider_error", "no JSON response", $p, $request, $response);
         }
 
         // validate JSON structure
         $requiredFields = array ('entry', 'startIndex', 'itemsPerPage', 'totalResults');
         foreach ($requiredFields as $f) {
             if (!array_key_exists($f, $jsonResponse)) {
-                throw new RemoteProviderException("provider_error", "missing required JSON fields", $this->_provider, $request, $response);
+                throw new RemoteProviderException("provider_error", "missing required JSON fields", $p, $request, $response);
             }
         }
 
         if ($jsonResponse['itemsPerPage'] !== count($jsonResponse['entry'])) {
-            throw new RemoteProviderException("provider_error", "unexpected itemsPerPage value", $this->_provider, $request, $response);
+            throw new RemoteProviderException("provider_error", "unexpected itemsPerPage value", $p, $request, $response);
         }
         if ($jsonResponse['totalResults'] < $jsonResponse['itemsPerPage']) {
-            throw new RemoteProviderException("provider_error", "unexpected totalResults value", $this->_provider, $request, $response);
+            throw new RemoteProviderException("provider_error", "unexpected totalResults value", $p, $request, $response);
         }
         // FIXME: add more validation checks
         return $jsonResponse['entry'];

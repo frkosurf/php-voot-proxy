@@ -9,12 +9,15 @@ $c2->register();
 $c3 = new SplClassLoader("VootProxy", "../lib");
 $c3->register();
 
-use \RestService\Utils\Config as Config;
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\HttpResponse as HttpResponse;
 use \RestService\Http\IncomingHttpRequest as IncomingHttpRequest;
+use \RestService\Utils\Config as Config;
 use \RestService\Utils\Logger as Logger;
+
 use \VootProxy\Proxy as Proxy;
+use \VootProxy\ProxyException as ProxyException;
+
 use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
 
 $logger = NULL;
@@ -45,13 +48,6 @@ try {
     });
 
 } catch (ProxyException $e) {
-    $response = new HttpResponse($e->getResponseCode());
-    $response->setHeader("Content-Type", "application/json");
-    $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getMessage())));
-    if (NULL !== $logger) {
-        $logger->logFatal($e->getLogMessage(TRUE) . PHP_EOL . $request . PHP_EOL . $response);
-    }
-} catch (RemoteProviderException $e) {
     $response = new HttpResponse($e->getResponseCode());
     $response->setHeader("Content-Type", "application/json");
     $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getMessage())));

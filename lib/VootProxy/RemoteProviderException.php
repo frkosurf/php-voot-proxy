@@ -2,6 +2,9 @@
 
 namespace VootProxy;
 
+use \RestService\Http\HttpRequest as HttpRequest;
+use \RestService\Http\HttpResponse as HttpResponse;
+
 class RemoteProviderException extends \Exception
 {
     private $_description;
@@ -9,7 +12,7 @@ class RemoteProviderException extends \Exception
     private $_request;
     private $_response;
 
-    public function __construct($message, $description, Provider $provider = NULL, HttpRequest $request = NULL, HttpResponse $response = NULL, $code = 0, Exception $previous = null)
+    public function __construct($message, $description, Provider $provider = NULL, HttpRequest $request = NULL, HttpResponse $response = NULL, $code = 0, \Exception $previous = null)
     {
         $this->_description = $description;
         parent::__construct($message, $code, $previous);

@@ -2,10 +2,10 @@
 
 namespace VootProxy;
 
-use \RestService\Utils\Config as Config;
-use \RestService\Utils\Logger as Logger;
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\HttpResponse as HttpResponse;
+use \RestService\Utils\Config as Config;
+use \RestService\Utils\Logger as Logger;
 
 use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
@@ -38,7 +38,6 @@ class Proxy
         $this->_resourceServer->requireScope("read");
 
         $sortBy = $request->getQueryParameter("sortBy");
-        $sortOrder = $request->getQueryParameter("sortOrder");
         $startIndex = $request->getQueryParameter("startIndex");
         $count = $request->getQueryParameter("count");
 
@@ -49,9 +48,12 @@ class Proxy
         $providers = $this->_storage->getProviders();
         foreach ($providers as $p) {
             $provider = Provider::fromArray($p);
+            if (!$this->passProviderFilter($provider->getFilter())) {
+                continue;
+            }
             try {
-                $remoteProvider = new RemoteProvider($this->_config, $this->_logger, $provider, $this->_resourceServer);
-                $allEntries += $remoteProvider->getGroups($providerUserId[0]);
+                $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
+                $allEntries += $remoteProvider->getGroups($provider, $providerUserId[0]);
             } catch (RemoteProviderException $e) {
                 // ignore provider errors, just try next provider
                 continue;
@@ -59,7 +61,7 @@ class Proxy
         }
 
         $totalResults = count($allEntries);
-        $sortedEntries = $this->sortEntries($allEntries, $sortBy, $sortOrder);
+        $sortedEntries = $this->sortEntries($allEntries, $sortBy);
         $limitedSortedEntries = $this->limitEntries($sortedEntries, $startIndex, $count);
         $scopedLimitedSortedEntries = $this->addGroupsScope($provider, $limitedSortedEntries);
 
@@ -83,7 +85,6 @@ class Proxy
         $this->_resourceServer->requireScope("read");
 
         $sortBy = $request->getQueryParameter("sortBy");
-        $sortOrder = $request->getQueryParameter("sortOrder");
         $startIndex = $request->getQueryParameter("startIndex");
         $count = $request->getQueryParameter("count");
 
@@ -97,19 +98,18 @@ class Proxy
         }
         $provider = Provider::fromArray($providerArray);
 
-        $providerUserId = $this->_resourceServer->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-
-        $entries = NULL;
-        try {
-            $remoteProvider = new RemoteProvider($this->_config, $this->_logger, $provider, $this->_resourceServer);
-            $entries = $remoteProvider->getPeople($providerUserId[0], $providerGroupId);
-        } catch (RemoteProviderException $e) {
-            // FIXME: should we just let this go, or error??!
-            $entries = array();
+        $entries = array();
+        if ($this->passProviderFilter($provider->getFilter())) {
+            $providerUserId = $this->_resourceServer->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
+            try {
+                $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
+                $entries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);
+            } catch (RemoteProviderException $e) {
+                // provider fails to get data, just ignore this
+            }
         }
         $totalResults = count($entries);
-
-        $sortedEntries = $this->sortEntries($entries, $sortBy, $sortOrder);
+        $sortedEntries = $this->sortEntries($entries, $sortBy);
         $limitedSortedEntries = $this->limitEntries($sortedEntries, $startIndex, $count);
         $scopedLimitedSortedEntries = $this->addPeopleScope($provider, $limitedSortedEntries);
 
@@ -124,21 +124,13 @@ class Proxy
         return $response;
     }
 
-    public function sortEntries(array $entries, $sortBy, $sortOrder)
+    public function sortEntries(array $entries, $sortBy)
     {
         if (NULL !== $sortBy) {
             if ("title" === $sortBy || "displayName" === $sortBy) {
-                if (NULL === $sortOrder && "ascending" !== $sortOrder && "descending" !== $sortOrder) {
-                    $sortOrder = "ascending";
-                }
-                usort($entries, function($a, $b) use ($sortBy, $sortOrder) {
+                usort($entries, function($a, $b) use ($sortBy) {
                     if (array_key_exists($sortBy, $a) && array_key_exists($sortBy, $b)) {
-                        if ("ascending" === $sortOrder) {
-                            return strcasecmp($a[$sortBy], $b[$sortBy]);
-                        } else {
-                            // must be descending
-                            return strcasecmp($b[$sortBy], $a[$sortBy]);
-                        }
+                        return strcasecmp($a[$sortBy], $b[$sortBy]);
                     }
                 });
             }
@@ -191,6 +183,25 @@ class Proxy
         }
 
         return $data;
+    }
+
+    public function passProviderFilter($providerFilter = NULL)
+    {
+        if (!empty($providerFilter)) {
+            // filter set for this provider
+            $filterAttributeName = $this->_config->getValue('groupProviderFilterAttributeName', FALSE);
+            if (NULL === $filterAttributeName) {
+                // filter attribute name not set in config
+                return FALSE;
+            }
+            $filterAttributeValue = $this->_resourceServer->getAttribute($filterAttributeName);
+            if (NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
+                // filter value is not part of the acceptable values for this provider
+                return FALSE;
+            }
+        }
+
+        return TRUE;
     }
 
 }

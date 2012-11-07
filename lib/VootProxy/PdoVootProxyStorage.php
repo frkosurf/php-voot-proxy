@@ -3,6 +3,7 @@
 namespace VootProxy;
 
 use \RestService\Utils\Config as Config;
+
 use \PDO as PDO;
 
 class PdoVootProxyStorage

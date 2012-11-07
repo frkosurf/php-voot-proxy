@@ -53,11 +53,8 @@ API:
 * `sortBy` - the element to sort by. For groups only sorting by `title` is
   supported. For people sorting by `id` and `displayName` is supported 
   (default is no sorting at all);
-* `sortOrder` - the order, can be either `ascending` or `descending` 
-  (default is ascending, but `sortBy` has to be set to a supported value
-  as well).
 
 An example:
 
-    /groups/@me/urn:foo:mygroup?startIndex=5&count=5&sortBy=displayName&sortOrder=descending
+    /groups/@me/urn:foo:mygroup?startIndex=5&count=5&sortBy=displayName
 

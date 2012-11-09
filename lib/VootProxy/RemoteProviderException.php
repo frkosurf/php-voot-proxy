@@ -15,6 +15,9 @@ class RemoteProviderException extends \Exception
     public function __construct($message, $description, Provider $provider = NULL, HttpRequest $request = NULL, HttpResponse $response = NULL, $code = 0, \Exception $previous = null)
     {
         $this->_description = $description;
+        $this->_provider = $provider;
+        $this->_request = $request;
+        $this->_response = $response;
         parent::__construct($message, $code, $previous);
     }
 
@@ -43,7 +46,7 @@ class RemoteProviderException extends \Exception
     {
         $msg = 'Message    : ' . $this->getMessage() . PHP_EOL .
                'Description: ' . $this->getDescription() . PHP_EOL .
-               'Provider   : ' . $this->_provider->getName() . " (" . $this->_provider->getId() . ")" . PHP_EOL
+               'Provider   : ' . $this->_provider->getName() . " (" . $this->_provider->getId() . ")" . PHP_EOL .
                'Request    : ' . PHP_EOL . $this->_request . PHP_EOL .
                'Response   : ' . PHP_EOL . $this->_response . PHP_EOL;
         if ($includeTrace) {

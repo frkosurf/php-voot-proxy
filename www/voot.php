@@ -60,7 +60,7 @@ try {
     $response->setHeader("Content-Type", "application/json");
     $response->setContent($e->getContent());
     if (NULL !== $logger) {
-        $logger->logFatal($e->getMessage() . PHP_EOL . $e->getDescription() . PHP_EOL . $request . PHP_EOL . $response);
+        $logger->logWarn($e->getMessage() . PHP_EOL . $e->getDescription() . PHP_EOL . $request . PHP_EOL . $response);
     }
 } catch (Exception $e) {
     $response = new HttpResponse(500);

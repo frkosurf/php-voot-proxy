@@ -53,7 +53,9 @@ class Proxy
             }
             try {
                 $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
-                $allEntries += $remoteProvider->getGroups($provider, $providerUserId[0]);
+                $providerEntries = $remoteProvider->getGroups($provider, $providerUserId[0]);
+                $scopedProviderEntries = $this->addGroupsScope($provider, $providerEntries);
+                $allEntries += $scopedProviderEntries;
             } catch (RemoteProviderException $e) {
                 // ignore provider errors, just try next provider
                 if (NULL !== $this->_logger) {
@@ -66,11 +68,10 @@ class Proxy
         $totalResults = count($allEntries);
         $sortedEntries = $this->sortEntries($allEntries, $sortBy);
         $limitedSortedEntries = $this->limitEntries($sortedEntries, $startIndex, $count);
-        $scopedLimitedSortedEntries = $this->addGroupsScope($provider, $limitedSortedEntries);
 
         $responseData = array (
-            "entry" => $scopedLimitedSortedEntries,
-            "itemsPerPage" => count($scopedLimitedSortedEntries),
+            "entry" => $limitedSortedEntries,
+            "itemsPerPage" => count($limitedSortedEntries),
             "totalResults" => $totalResults,
             "startIndex" => $startIndex
         );
@@ -106,7 +107,9 @@ class Proxy
             $providerUserId = $this->_resourceServer->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
             try {
                 $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
-                $entries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);
+                $providerEntries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);
+                $scopedProviderEntries = $this->addPeopleScope($provider, $providerEntries);
+                $entries = $scopedProviderEntries;
             } catch (RemoteProviderException $e) {
                 // provider fails to get data, just ignore this
             }
@@ -114,11 +117,10 @@ class Proxy
         $totalResults = count($entries);
         $sortedEntries = $this->sortEntries($entries, $sortBy);
         $limitedSortedEntries = $this->limitEntries($sortedEntries, $startIndex, $count);
-        $scopedLimitedSortedEntries = $this->addPeopleScope($provider, $limitedSortedEntries);
 
         $responseData = array (
-            "entry" => $scopedLimitedSortedEntries,
-            "itemsPerPage" => count($scopedLimitedSortedEntries),
+            "entry" => $limitedSortedEntries,
+            "itemsPerPage" => count($limitedSortedEntries),
             "totalResults" => $totalResults,
             "startIndex" => $startIndex
         );

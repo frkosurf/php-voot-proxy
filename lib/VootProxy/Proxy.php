@@ -56,9 +56,9 @@ class Proxy
                 $allEntries += $remoteProvider->getGroups($provider, $providerUserId[0]);
             } catch (RemoteProviderException $e) {
                 // ignore provider errors, just try next provider
-                if(NULL !== $this->_logger) {
+                if (NULL !== $this->_logger) {
                     $this->_logger->logWarn($e->getLogMessage() . PHP_EOL . $request);
-                }    
+                }
                 continue;
             }
         }

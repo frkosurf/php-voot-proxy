@@ -79,6 +79,13 @@ class RemoteProvider
         if ($jsonResponse['totalResults'] < $jsonResponse['itemsPerPage']) {
             throw new RemoteProviderException("provider_error", "unexpected totalResults value", $p, $request, $response);
         }
+
+        foreach($jsonResponse['entry'] as $e) {
+            if(!array_key_exists("id", $e) || empty($e['id'])) {
+                throw new RemoteProviderException("provider_error", "required id parameter is missing from entry or empty", $p, $request, $response);
+            }
+        }
+
         // FIXME: add more validation checks
         return $jsonResponse['entry'];
     }

@@ -61,6 +61,10 @@ class RemoteProvider
             throw new RemoteProviderException("provider_error", "no JSON response", $p, $request, $response);
         }
 
+        if(!is_array($jsonResponse)) {
+            throw new RemoteProviderException("provider_error", "unexpected JSON response", $p, $request, $response);
+        }
+
         // validate JSON structure
         $requiredFields = array ('entry', 'startIndex', 'itemsPerPage', 'totalResults');
         foreach ($requiredFields as $f) {

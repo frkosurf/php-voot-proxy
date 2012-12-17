@@ -39,9 +39,6 @@ so they can be used to register the client/provider combinations
 Limit access to a group provider per client
    
     {
-        "allowGroupList": true, 
-        "allowPeople": true, 
-        "allowPeopleList": true, 
         "attributeRelease": [
             "id", 
             "displayName",
@@ -114,10 +111,6 @@ This shows the default configuration
     | [ ] Foo           [ ] XYZ        |
     | [ ] Bar           [ ] ABC        |
     | [ ] FooBar        [ ] Blah       |
-    |                                  |
-    | Allowed API Calls                |
-    | [x] Groups                       |    Allow client to retrieve details of the groups the user is a member of
-    | [ ] People                       |    Allow client to retrieve member details of groups the user is a member of
     |                                  |
     | Attributes for People Calls      |
     | [x] id                           |    ID is persistent user identifier (hopefully, but not the same as the SP

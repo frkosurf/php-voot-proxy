@@ -1,6 +1,6 @@
 <?php
 
-require_once "lib/SplClassLoader.php";
+require_once 'lib/SplClassLoader.php';
 
 $c1 = new SplClassLoader("RestService", "extlib/php-rest-service/lib");
 $c1->register();

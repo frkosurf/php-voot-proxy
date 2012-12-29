@@ -61,7 +61,7 @@ class RemoteProvider
             throw new RemoteProviderException("provider_error", "no JSON response", $p, $request, $response);
         }
 
-        if(!is_array($jsonResponse)) {
+        if (!is_array($jsonResponse)) {
             throw new RemoteProviderException("provider_error", "unexpected JSON response", $p, $request, $response);
         }
 
@@ -80,8 +80,8 @@ class RemoteProvider
             throw new RemoteProviderException("provider_error", "unexpected totalResults value", $p, $request, $response);
         }
 
-        foreach($jsonResponse['entry'] as $e) {
-            if(!array_key_exists("id", $e) || empty($e['id'])) {
+        foreach ($jsonResponse['entry'] as $e) {
+            if (!array_key_exists("id", $e) || empty($e['id'])) {
                 throw new RemoteProviderException("provider_error", "required id parameter is missing from entry or empty", $p, $request, $response);
             }
         }

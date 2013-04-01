@@ -35,7 +35,8 @@ class RemoteProvider
     private function _makeVootRequest(Provider $p, $requestUri)
     {
         $request = new HttpRequest($requestUri);
-        $request->setHeader("Authorization", "Basic " . base64_encode($p->getBasicUser() . ":" . $p->getBasicPass()));
+        $request->setBasicAuthUser($p->getBasicUser());
+        $request->setBasicAuthPass($p->getBasicPass());
         if (NULL !== $this->_logger) {
             $this->_logger->logDebug($request);
         }

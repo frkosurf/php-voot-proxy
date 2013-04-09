@@ -35,7 +35,8 @@ class Proxy
         $response->setContentType("application/json");
 
         $this->_resourceServer->verifyAuthorizationHeader($request->getHeader("Authorization"));
-        $this->_resourceServer->requireScope("read");
+        // FIXME: for now we also accept "read" scope, but in the future we SHOULD NOT
+        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/groups", "read"));
 
         $sortBy = $request->getQueryParameter("sortBy");
         $startIndex = $request->getQueryParameter("startIndex");
@@ -86,7 +87,8 @@ class Proxy
         $response->setContentType("application/json");
 
         $this->_resourceServer->verifyAuthorizationHeader($request->getHeader("Authorization"));
-        $this->_resourceServer->requireScope("read");
+        // FIXME: for now we also accept "read" scope, but in the future we SHOULD NOT
+        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/people", "read"));
 
         $sortBy = $request->getQueryParameter("sortBy");
         $startIndex = $request->getQueryParameter("startIndex");

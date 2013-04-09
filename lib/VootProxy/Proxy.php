@@ -88,7 +88,7 @@ class Proxy
 
         $this->_resourceServer->verifyAuthorizationHeader($request->getHeader("Authorization"));
         // FIXME: for now we also accept "read" scope, but in the future we SHOULD NOT
-        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/members", "read"));
+        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/people", "read"));
 
         $sortBy = $request->getQueryParameter("sortBy");
         $startIndex = $request->getQueryParameter("startIndex");

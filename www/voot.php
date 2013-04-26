@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATO
 
 $c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
 $c1->register();
-$c2 = new SplClassLoader("OAuth", "../extlib/php-lib-remote-rs/lib");
+$c2 = new SplClassLoader("OAuth", "../extlib/php-oauth-lib-rs/lib");
 $c2->register();
 $c3 = new SplClassLoader("VootProxy", "../lib");
 $c3->register();
@@ -23,6 +23,7 @@ use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
 $logger = NULL;
 $request = NULL;
 $response = NULL;
+$config = NULL;
 
 try {
     $config = new Config(dirname(__DIR__) . DIRECTORY_SEPARATOR . "config" . DIRECTORY_SEPARATOR . "proxy.ini");
@@ -50,13 +51,16 @@ try {
 } catch (ProxyException $e) {
     $response = new HttpResponse($e->getResponseCode());
     $response->setHeader("Content-Type", "application/json");
-    $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getMessage())));
+    $response->setContent(json_encode(array("error" => $e->getMessage(), "error_description" => $e->getDescription())));
     if (NULL !== $logger) {
         $logger->logFatal($e->getLogMessage(TRUE) . PHP_EOL . $request . PHP_EOL . $response);
     }
 } catch (RemoteResourceServerException $e) {
     $response = new HttpResponse($e->getResponseCode());
-    $response->setHeader("WWW-Authenticate", $e->getAuthenticateHeader());
+    $e->setRealm($config->getSectionValue("OAuth", "realm"));
+    if (NULL !== $e->getAuthenticateHeader()) {
+        $response->setHeader("WWW-Authenticate", $e->getAuthenticateHeader());
+    }
     $response->setHeader("Content-Type", "application/json");
     $response->setContent($e->getContent());
     if (NULL !== $logger) {

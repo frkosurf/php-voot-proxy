@@ -11,8 +11,8 @@ groupProviderFilterAttributeName = "schacHomeOrganization"
 
 ; OAuth AS
 [OAuth]
-tokenInfoEndpoint = "http://localhost/php-oauth/tokeninfo.php"
-resourceServerRealm = "VOOT Proxy"
+introspectionEndpoint = "http://localhost/php-oauth/introspect.php"
+realm = "VOOT Proxy"
 
 ; Logging
 [Log]

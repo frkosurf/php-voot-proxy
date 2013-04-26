@@ -24,7 +24,6 @@ class Proxy
         $this->_storage = new PdoVootProxyStorage($this->_config);
 
         $rsConfig = $this->_config->getSectionValues("OAuth");
-        $rsConfig += array("throwException" => TRUE);
 
         $this->_resourceServer = new RemoteResourceServer($rsConfig);
     }
@@ -34,9 +33,9 @@ class Proxy
         $response = new HttpResponse();
         $response->setContentType("application/json");
 
-        $this->_resourceServer->verifyAuthorizationHeader($request->getHeader("Authorization"));
+        $introspection = $this->_resourceServer->verifyRequest($request->getHeaders(), $request->getQueryParameters());
         // FIXME: for now we also accept "read" scope, but in the future we SHOULD NOT
-        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/groups", "read"));
+        $introspection->requireAnyScope(array("http://openvoot.org/groups", "read"));
 
         $sortBy = $request->getQueryParameter("sortBy");
         $startIndex = $request->getQueryParameter("startIndex");
@@ -44,7 +43,7 @@ class Proxy
 
         $allEntries = array();
 
-        $providerUserId = $this->_resourceServer->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
+        $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
 
         $providers = $this->_storage->getProviders();
         foreach ($providers as $p) {
@@ -86,9 +85,9 @@ class Proxy
         $response = new HttpResponse();
         $response->setContentType("application/json");
 
-        $this->_resourceServer->verifyAuthorizationHeader($request->getHeader("Authorization"));
+        $introspection = $this->_resourceServer->verifyRequest($request->getHeaders(), $request->getQueryParameters());
         // FIXME: for now we also accept "read" scope, but in the future we SHOULD NOT
-        $this->_resourceServer->requireAnyScope(array("http://openvoot.org/people", "read"));
+        $introspection->requireAnyScope(array("http://openvoot.org/people", "read"));
 
         $sortBy = $request->getQueryParameter("sortBy");
         $startIndex = $request->getQueryParameter("startIndex");
@@ -106,7 +105,7 @@ class Proxy
 
         $entries = array();
         if ($this->passProviderFilter($provider->getFilter())) {
-            $providerUserId = $this->_resourceServer->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
+            $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
             try {
                 $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
                 $providerEntries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);
@@ -161,7 +160,7 @@ class Proxy
     public function addGroupsScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
-            $entries[$k]['id'] = "urn:groups:" . $provider->getId() . ":" . $entries[$k]['id'];
+            $entries[$k]['id'] = "urn:x-groups:" . $provider->getId() . ":" . $entries[$k]['id'];
         }
 
         return $entries;
@@ -170,7 +169,7 @@ class Proxy
     public function addPeopleScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
-            $entries[$k]['id'] = "urn:people:" . $provider->getId() . ":" . $entries[$k]['id'];
+            $entries[$k]['id'] = "urn:x-people:" . $provider->getId() . ":" . $entries[$k]['id'];
         }
 
         return $entries;
@@ -185,30 +184,11 @@ class Proxy
         if ("urn" !== $data[0]) {
             throw new ProxyException("invalid_request", "malformed identifier");
         }
-        if ("people" !== $data[1] && "groups" !== $data[1]) {
+        if ("x-people" !== $data[1] && "x-groups" !== $data[1]) {
             throw new ProxyException("invalid_request", "malformed identifier");
         }
 
         return $data;
-    }
-
-    public function passProviderFilter($providerFilter = NULL)
-    {
-        if (!empty($providerFilter)) {
-            // filter set for this provider
-            $filterAttributeName = $this->_config->getValue('groupProviderFilterAttributeName', FALSE);
-            if (NULL === $filterAttributeName) {
-                // filter attribute name not set in config
-                return FALSE;
-            }
-            $filterAttributeValue = $this->_resourceServer->getAttribute($filterAttributeName);
-            if (NULL === $filterAttributeValue || !in_array($filterAttributeValue[0], $providerFilter)) {
-                // filter value is not part of the acceptable values for this provider
-                return FALSE;
-            }
-        }
-
-        return TRUE;
     }
 
 }

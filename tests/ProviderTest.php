@@ -14,15 +14,16 @@ class ProviderTest extends PHPUnit_Framework_TestCase
      */
     public function testValidProviders(array $provider)
     {
-        Provider::validate($provider);
+        Provider::fromArray($provider);
     }
 
     /**
      * @dataProvider doesPassFilter
      */
-    public function testDoesPassFilter(array $data, array $filter)
+    public function testDoesPassFilter(array $toFilter, array $filter)
     {
-        Provider::passFilter($data, $filter);
+        $p = Provider::fromArray(array("id" => "foo", "endpoint" => "http://example.org/foo", "filter" => $filter));
+        $this->assertTrue($p->passFilter($toFilter));
     }
 
     /**
@@ -31,7 +32,7 @@ class ProviderTest extends PHPUnit_Framework_TestCase
     public function testInvalidProvider(array $provider, $message)
     {
         try {
-            Provider::validate($provider);
+            Provider::fromArray($provider);
             $this->assertTrue(FALSE);
         } catch (ProviderException $e) {
             $this->assertEquals($message, $e->getMessage());
@@ -41,14 +42,10 @@ class ProviderTest extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider doesNotPassFilter
      */
-    public function testDoesNotPassFilter(array $data, array $filter)
+    public function testDoesNotPassFilter(array $toFilter, array $filter)
     {
-        try {
-            Provider::passFilter($data, $filter);
-            $this->assertTrue(FALSE);
-        } catch (ProviderException $e) {
-            $this->assertEquals("filter not passed", $e->getMessage());
-        }
+        $p = Provider::fromArray(array("id" => "foo", "endpoint" => "http://example.org/foo", "filter" => $filter));
+        $this->assertFalse($p->passFilter($toFilter));
     }
 
     public function validProviders()
@@ -71,11 +68,11 @@ class ProviderTest extends PHPUnit_Framework_TestCase
         return array(
             array(
                 array(),
-                "missing required parameter 'id'"
+                "id must be set"
             ),
             array(
                 array("id" => "foo"),
-                "missing required parameter 'endpoint'"
+                "endpoint must be set"
             ),
             array(
                 array("id" => "foo", "endpoint" => "xyz"),
@@ -87,7 +84,7 @@ class ProviderTest extends PHPUnit_Framework_TestCase
             ),
             array(
                 array("id" => "foo", "endpoint" => "http://www.example.org/foo", "contact_email" => "foo"),
-                "contact email should be valid email address"
+                "contact_email must be a valid email address"
             ),
             array(
                 array("id" => "foo", "endpoint" => "http://www.example.org/foo", "basic_user" => "xyz:abc"),
@@ -102,12 +99,8 @@ class ProviderTest extends PHPUnit_Framework_TestCase
                 "invalid character in 'basic_pass'"
             ),
             array(
-                array("id" => "foo", "endpoint" => "http://www.example.org/foo", "basic_user" => "abc", "basic_pass" => "xyz", "filter" => "abc"),
-                "filter must be array"
-            ),
-            array(
                 array("id" => "foo", "endpoint" => "http://www.example.org/foo", "basic_user" => "abc", "basic_pass" => "xyz", "filter" => array(0,1,2,3)),
-                "elements of filter must be strings"
+                "filter entries must be strings"
             ),
 
         );

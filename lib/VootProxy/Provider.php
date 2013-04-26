@@ -5,43 +5,45 @@ namespace VootProxy;
 class Provider
 {
     // VSCHAR     = %x20-7E
-    public $regExpVSCHAR = '/^(?:[\x20-\x7E])*$/';
+    const REGEXP_VSCHAR = '/^(?:[\x20-\x7E])*$/';
 
-    private $_provider;
+    private $_data;
 
-    public function __construct($id, $name, $endpoint)
+    public function __construct($id, $endpoint)
     {
-        $this->_provider = array();
+        $this->_data = array();
         $this->setId($id);
-        $this->setName($name);
         $this->setEndpoint($endpoint);
-        $this->setBasicUser(NULL);
-        $this->setBasicPass(NULL);
-        $this->setFilter(NULL);
-        $this->setContactEmail(NULL);
     }
 
-    public static function fromArray(array $a)
+    public static function fromArray(array $providerData)
     {
-        $requiredFields = array ("id", "name", "endpoint");
-        foreach ($requiredFields as $r) {
-            if (!array_key_exists($r, $a)) {
-                throw new ProviderException("not a valid provider, '" . $r . "' not set");
+        foreach (array ('id', 'endpoint') as $key) {
+            if (!isset($providerData[$key])) {
+                throw new ProviderException(sprintf("%s must be set", $key));
             }
         }
-        $c = new static($a['id'], $a['name'], $a['endpoint']);
 
-        if (array_key_exists("basic_user", $a)) {
-            $c->setBasicUser($a['basic_user']);
+        $c = new static($providerData['id'], $providerData['endpoint']);
+
+        if (isset($providerData['name'])) {
+            $c->setName($providerData['name']);
         }
-        if (array_key_exists("basic_pass", $a)) {
-            $c->setBasicPass($a['basic_pass']);
+
+        if (isset($providerData['basic_user'])) {
+            $c->setBasicUser($providerData['basic_user']);
         }
-        if (array_key_exists("filter", $a)) {
-            $c->setFilter($a['filter']);
+
+        if (isset($providerData['basic_pass'])) {
+            $c->setBasicPass($providerData['basic_pass']);
         }
-        if (array_key_exists("contact_email", $a)) {
-            $c->setContactEmail($a['contact_email']);
+
+        if (isset($providerData['filter'])) {
+            $c->setFilter($providerData['filter']);
+        }
+
+        if (isset($providerData['contact_email'])) {
+            $c->setContactEmail($providerData['contact_email']);
         }
 
         return $c;
@@ -49,32 +51,23 @@ class Provider
 
     public function setId($i)
     {
-        if (empty($i)) {
-            throw new ProviderException("id cannot be empty");
+        if (!is_string($i) || empty($i)) {
+            throw new ProviderException("id must be non empty string");
         }
-        $this->_provider['id'] = $i;
+        $this->_data['id'] = $i;
     }
 
     public function getId()
     {
-        return $this->_provider['id'];
-    }
-
-    public function setName($n)
-    {
-        if (empty($n)) {
-            throw new ProviderException("name cannot be empty");
-        }
-        $this->_provider['name'] = $n;
-    }
-
-    public function getName()
-    {
-        return $this->_provider['name'];
+        return $this->_data['id'];
     }
 
     public function setEndpoint($r)
     {
+        if (!is_string($r) || empty($r)) {
+            throw new ProviderException("endpoint must be non empty string");
+        }
+
         if (FALSE === filter_var($r, FILTER_VALIDATE_URL)) {
             throw new ProviderException("endpoint should be valid URL");
         }
@@ -82,80 +75,116 @@ class Provider
         if (NULL !== parse_url($r, PHP_URL_FRAGMENT)) {
             throw new ProviderException("endpoint cannot contain a fragment");
         }
-        $this->_provider['endpoint'] = $r;
+        $this->_data['endpoint'] = $r;
     }
 
     public function getEndpoint()
     {
-        return $this->_provider['endpoint'];
+        return $this->_data['endpoint'];
+    }
+
+    public function setName($n)
+    {
+        if (!is_string($n) || empty($n)) {
+            throw new ProviderException("name must be non empty string");
+        }
+        $this->_data['name'] = $n;
+    }
+
+    public function getName()
+    {
+        return isset($this->_data['name']) ? $this->_data['name'] : FALSE;
     }
 
     public function setBasicUser($s)
     {
-        $result = preg_match($this->regExpVSCHAR, $s);
-        if (1 !== $result) {
-            throw new ProviderException("basic_user contains invalid character");
+        if (1 !== preg_match(self::REGEXP_VSCHAR, $s)) {
+            throw new ProviderException("invalid character(s) in 'basic_user'");
         }
-        if (FALSE !== strpos(":", $s)) {
-            throw new ProviderException("basic_user contains invalid character");
+        if (FALSE !== strpos($s, ":")) {
+            throw new ProviderException("invalid character in 'basic_user'");
         }
-        $this->_provider['basic_user'] = empty($s) ? NULL : $s;
+        $this->_data['basic_user'] = $s;
     }
 
     public function getBasicUser()
     {
-        return $this->_provider['basic_user'];
+        return isset($this->_data['basic_user']) ? $this->_data['basic_user'] : FALSE;
     }
 
     public function setBasicPass($s)
     {
-        $result = preg_match($this->regExpVSCHAR, $s);
-        if (1 !== $result) {
-            throw new ProviderException("basic_pass contains invalid character");
+        if (1 !== preg_match(self::REGEXP_VSCHAR, $s)) {
+            throw new ProviderException("invalid character(s) in 'basic_pass'");
         }
-        if (FALSE !== strpos(":", $s)) {
-            throw new ProviderException("basic_pass contains invalid character");
+        if (FALSE !== strpos($s, ":")) {
+            throw new ProviderException("invalid character in 'basic_pass'");
         }
-        $this->_provider['basic_pass'] = empty($s) ? NULL : $s;
+        $this->_data['basic_pass'] = $s;
     }
 
     public function getBasicPass()
     {
-        return $this->_provider['basic_pass'];
+        return isset($this->_data['basic_pass']) ? $this->_data['basic_pass'] : FALSE;
     }
 
-    public function setFilter($f)
+    public function setFilter(array $filter)
     {
-        // contains an array of attribute values to match against
-        if (NULL !== $f && !is_array($f)) {
-            throw new ProviderException("filter should be array");
+        // filter must be array with strings
+        foreach ($filter as $f) {
+            if (!is_string($f)) {
+                throw new ProviderException("filter entries must be strings");
+            }
         }
-        $this->_provider['filter'] = $f;
+        $this->_data['filter'] = array_values($filter);
     }
 
     public function getFilter()
     {
-        return $this->_provider['filter'];
+        return isset($this->_data['filter']) ? $this->_data['filter'] : FALSE;
     }
 
     public function setContactEmail($c)
     {
-        if (!empty($c)) {
-            if (FALSE === filter_var($c, FILTER_VALIDATE_EMAIL)) {
-                throw new ProviderException("contact email should be either empty or valid email address");
-            }
+        if (!is_string($c) || empty($c)) {
+            throw new ProviderException("contact_email must be non empty string");
         }
-        $this->_provider['contact_email'] = empty($c) ? NULL : $c;
+        if (FALSE === filter_var($c, FILTER_VALIDATE_EMAIL)) {
+            throw new ProviderException("contact_email must be a valid email address");
+        }
+        $this->_data['contact_email'] = $c;
     }
 
     public function getContactEmail()
     {
-        return $this->_provider['contact_email'];
+        return isset($this->_data['contact_email']) ? $this->_data['contact_email'] : FALSE;
     }
 
     public function getProviderAsArray()
     {
-        return $this->_provider;
+        return $this->_data;
+    }
+
+    // one or more elements from data must be in filter to pass
+    // PASS: array("foo"), array("foo", "bar")
+    // FAIL: array("foo"), array("bar", "baz")
+    // FAIL: array(), array("foo", "bar")
+    // PASS: array("foo"), array()
+    public function passFilter(array $toFilter)
+    {
+        $filter = $this->getFilter();
+        if (FALSE === $filter || 0 === count($filter)) {
+            // no filter defined, so everything passes
+            return TRUE;
+        }
+        // filter defined, with elements
+        foreach ($toFilter as $e) {
+            if (in_array($e, $filter)) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
     }
 
 }

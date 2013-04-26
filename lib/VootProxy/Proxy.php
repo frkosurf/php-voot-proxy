@@ -44,11 +44,11 @@ class Proxy
         $allEntries = array();
 
         $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-
+        $filterAttributeValues = $introspection->getAttribute($this->_config->getValue('groupProviderFilterAttributeName'));
         $providers = $this->_storage->getProviders();
         foreach ($providers as $p) {
             $provider = Provider::fromArray($p);
-            if (!$this->passProviderFilter($provider->getFilter())) {
+            if (!$provider->passFilter($filterAttributeValues)) {
                 continue;
             }
             try {
@@ -103,9 +103,11 @@ class Proxy
         }
         $provider = Provider::fromArray($providerArray);
 
+        $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
+        $filterAttributeValues = $introspection->getAttribute($this->_config->getValue('groupProviderFilterAttributeName'));
+
         $entries = array();
-        if ($this->passProviderFilter($provider->getFilter())) {
-            $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
+        if ($provider->passFilter($filterAttributeValues)) {
             try {
                 $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
                 $providerEntries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);

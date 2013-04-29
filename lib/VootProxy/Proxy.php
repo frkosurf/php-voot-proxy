@@ -52,7 +52,7 @@ class Proxy
                 continue;
             }
             try {
-                $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
+                $remoteProvider = new RemoteProvider($this->_logger);
                 $providerEntries = $remoteProvider->getGroups($provider, $providerUserId[0]);
                 $scopedProviderEntries = $this->addGroupsScope($provider, $providerEntries);
                 $allEntries += $scopedProviderEntries;
@@ -109,7 +109,7 @@ class Proxy
         $entries = array();
         if ($provider->passFilter($filterAttributeValues)) {
             try {
-                $remoteProvider = new RemoteProvider($this->_config, $this->_logger);
+                $remoteProvider = new RemoteProvider($this->_logger);
                 $providerEntries = $remoteProvider->getPeople($provider, $providerUserId[0], $providerGroupId);
                 $scopedProviderEntries = $this->addPeopleScope($provider, $providerEntries);
                 $entries = $scopedProviderEntries;

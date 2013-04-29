@@ -50,7 +50,7 @@ try {
     }
 } catch (RemoteResourceServerException $e) {
     $response = new HttpResponse($e->getResponseCode());
-    $e->setRealm($config->getSectionValue("OAuth", "realm"));
+    $e->setRealm($config->getSectionValue("OAuth", "realm", FALSE));
     if (NULL !== $e->getAuthenticateHeader()) {
         $response->setHeader("WWW-Authenticate", $e->getAuthenticateHeader());
     }

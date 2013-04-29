@@ -1,12 +1,6 @@
 <?php
 
-require_once 'lib/SplClassLoader.php';
-
-$c1 = new SplClassLoader("RestService", "extlib/php-rest-service/lib");
-$c1->register();
-
-$c2 =  new SplClassLoader("VootProxy", "lib");
-$c2->register();
+require_once 'lib/_autoload.php';
 
 use \RestService\Utils\Config as Config;
 use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;

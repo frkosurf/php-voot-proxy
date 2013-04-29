@@ -1,13 +1,6 @@
 <?php
 
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "SplClassLoader.php";
-
-$c1 = new SplClassLoader("RestService", "../extlib/php-rest-service/lib");
-$c1->register();
-$c2 = new SplClassLoader("OAuth", "../extlib/php-oauth-lib-rs/lib");
-$c2->register();
-$c3 = new SplClassLoader("VootProxy", "../lib");
-$c3->register();
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "_autoload.php";
 
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\HttpResponse as HttpResponse;

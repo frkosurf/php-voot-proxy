@@ -1,15 +1,6 @@
 <?php
 
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "SplClassLoader.php";
-
-$c1 = new SplClassLoader("RestService", "extlib/php-rest-service/lib");
-$c1->register();
-
-$c2 =  new SplClassLoader("VootProxy", "lib");
-$c2->register();
-
-$c =  new SplClassLoader("Tuxed", dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib");
-$c->register();
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "_autoload.php";
 
 use \RestService\Utils\Config as Config;
 use \VootProxy\PdoVootProxyStorage as PdoVootProxyStorage;

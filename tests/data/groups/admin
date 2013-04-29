@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Date: Sun, 28 Apr 2013 19:18:35 GMT
+Server: Apache/2.2.22 (Unix) DAV/2 PHP/5.3.15 with Suhosin-Patch mod_ssl/2.2.22 OpenSSL/0.9.8r
+X-Powered-By: PHP/5.3.15
+Content-Length: 449
+Content-Type: application/json
+
+{"startIndex":0,"totalResults":"3","itemsPerPage":3,"entry":[{"id":"member","title":"Members","description":"Group containing everyone at this institute.","voot_membership_role":"member"},{"id":"employee","title":"Employees","description":"Group containing employees.","voot_membership_role":"admin"},{"id":"networkadmin","title":"Network Administrators","description":"Group containing the network administrators.","voot_membership_role":"admin"}]}

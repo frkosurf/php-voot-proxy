@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Date: Sun, 28 Apr 2013 19:21:26 GMT
+Server: Apache/2.2.22 (Unix) DAV/2 PHP/5.3.15 with Suhosin-Patch mod_ssl/2.2.22 OpenSSL/0.9.8r
+X-Powered-By: PHP/5.3.15
+Content-Length: 330
+Content-Type: application/json
+
+{"startIndex":0,"totalResults":"2","itemsPerPage":2,"entry":[{"id":"teacher","displayName":"Margie Korn","voot_membership_role":"manager","emails":[{"type":"work","value":"teacher@example.edu"}]},{"id":"admin","displayName":"Carlos Catalano","voot_membership_role":"admin","emails":[{"type":"work","value":"admin@example.edu"}]}]}

@@ -1,7 +1,6 @@
 <?php
 
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "VootProxy" . DIRECTORY_SEPARATOR . "Provider.php";
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "VootProxy" . DIRECTORY_SEPARATOR . "ProviderException.php";
+require_once dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "_autoload.php";
 
 use \VootProxy\Provider as Provider;
 use \VootProxy\ProviderException as ProviderException;

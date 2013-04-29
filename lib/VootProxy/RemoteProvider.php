@@ -2,19 +2,16 @@
 
 namespace VootProxy;
 
-use \RestService\Utils\Config as Config;
 use \RestService\Utils\Logger as Logger;
 use \RestService\Http\HttpRequest as HttpRequest;
 use \RestService\Http\OutgoingHttpRequest as OutgoingHttpRequest;
 
 class RemoteProvider
 {
-    private $_config;
     private $_logger;
 
-    public function __construct(Config $c, Logger $l)
+    public function __construct(Logger $l = NULL)
     {
-        $this->_config = $c;
         $this->_logger = $l;
     }
 
@@ -53,6 +50,7 @@ class RemoteProvider
 
         // validate HTTP response code
         if (200 !== $response->getStatusCode()) {
+        die(gettype($response->getStatusCode()));
             throw new RemoteProviderException("provider_error", "unexpected response code", $p, $request, $response);
         }
 

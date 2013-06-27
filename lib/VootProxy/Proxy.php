@@ -2,10 +2,11 @@
 
 namespace VootProxy;
 
-use \RestService\Http\HttpRequest as HttpRequest;
-use \RestService\Http\HttpResponse as HttpResponse;
-use \RestService\Utils\Config as Config;
-use \RestService\Utils\Logger as Logger;
+use \RestService\Http\HttpRequest;
+use \RestService\Http\HttpResponse;
+use \RestService\Utils\Config;
+use \RestService\Utils\Logger;
+use \RestService\Utils\Json;
 
 use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
@@ -43,8 +44,19 @@ class Proxy
 
         $allEntries = array();
 
-        $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-        $filterAttributeValues = $introspection->getAttribute($this->_config->getValue('groupProviderFilterAttributeName'));
+        // this only works for SAML authentication backend...
+        $ext = $introspection->getExt();
+        $gpqan = $this->_config->getValue('groupProviderQueryAttributeName');
+        $gpfan = $this->_config->getValue('groupProviderFilterAttributeName');
+        if (!array_key_exists($gpqan, $ext)) {
+            throw new ProxyException(sprintf("attribute '%s' not provided by introspection endpoint", $gpqan));
+        }
+        if (!array_key_exists($gpfan, $ext)) {
+            throw new ProxyException(sprintf("attribute '%s' not provided by introspection endpoint", $gpfan));
+        }
+        $providerUserId = $ext[$gpqan];
+        $filterAttributeValues = $ext[$gpfan];
+
         $providers = $this->_storage->getProviders();
         foreach ($providers as $p) {
             $provider = Provider::fromArray($p);
@@ -103,8 +115,18 @@ class Proxy
         }
         $provider = Provider::fromArray($providerArray);
 
-        $providerUserId = $introspection->getAttribute($this->_config->getValue('groupProviderQueryAttributeName'));
-        $filterAttributeValues = $introspection->getAttribute($this->_config->getValue('groupProviderFilterAttributeName'));
+        // this only works for SAML authentication backend...
+        $ext = $introspection->getExt();
+        $gpqan = $this->_config->getValue('groupProviderQueryAttributeName');
+        $gpfan = $this->_config->getValue('groupProviderFilterAttributeName');
+        if (!array_key_exists($gpqan, $ext)) {
+            throw new ProxyException(sprintf("attribute '%s' not provided by introspection endpoint", $gpqan));
+        }
+        if (!array_key_exists($gpfan, $ext)) {
+            throw new ProxyException(sprintf("attribute '%s' not provided by introspection endpoint", $gpfan));
+        }
+        $providerUserId = $ext[$gpqan];
+        $filterAttributeValues = $ext[$gpfan];
 
         $entries = array();
         if ($provider->passFilter($filterAttributeValues)) {

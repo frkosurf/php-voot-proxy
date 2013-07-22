@@ -106,8 +106,8 @@ class Proxy
         $count = $request->getQueryParameter("count");
 
         $parsedScope = $this->parseScope($groupId);
-        $providerId = $parsedScope[2];
-        $providerGroupId = $parsedScope[3];
+        $providerId = $parsedScope[3];
+        $providerGroupId = $parsedScope[4];
 
         $providerArray = $this->_storage->getProvider($providerId);
         if (FALSE === $providerArray) {
@@ -184,7 +184,7 @@ class Proxy
     public function addGroupsScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
-            $entries[$k]['id'] = "urn:x-groups:" . $provider->getId() . ":" . $entries[$k]['id'];
+            $entries[$k]['id'] = "urn:x-voot:groups:" . $provider->getId() . ":" . $entries[$k]['id'];
         }
 
         return $entries;
@@ -193,7 +193,7 @@ class Proxy
     public function addPeopleScope(Provider $provider, array $entries)
     {
         foreach ($entries as $k => $v) {
-            $entries[$k]['id'] = "urn:x-people:" . $provider->getId() . ":" . $entries[$k]['id'];
+            $entries[$k]['id'] = "urn:x-voot:people:" . $provider->getId() . ":" . $entries[$k]['id'];
         }
 
         return $entries;
@@ -202,13 +202,16 @@ class Proxy
     public function parseScope($entry)
     {
         $data = explode(":", $entry);
-        if (4 !== count($data)) {
+        if (5 !== count($data)) {
             throw new ProxyException("invalid_request", "malformed identifier");
         }
         if ("urn" !== $data[0]) {
             throw new ProxyException("invalid_request", "malformed identifier");
         }
-        if ("x-people" !== $data[1] && "x-groups" !== $data[1]) {
+        if ("x-voot" !== $data[1]) {
+            throw new ProxyException("invalid_request", "malformed identifier");
+        }
+        if ("people" !== $data[2] && "groups" !== $data[2]) {
             throw new ProxyException("invalid_request", "malformed identifier");
         }
 
